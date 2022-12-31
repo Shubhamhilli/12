@@ -1,0 +1,3810 @@
+{\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang1033{\fonttbl{\f0\fnil\fcharset0 Calibri;}{\f1\fnil Calibri;}}
+{\*\generator Riched20 10.0.19041}\viewkind4\uc1 
+\pard\sa200\sl276\slmult1\b\f0\fs32\lang9 Slip No 12\par
+\fs22 Q.1 Write the simulation program for demand paging and show the page \par
+ scheduling and total number of page faults according the LRU page \par
+ replacement algorithm. Assume the memory of n frames.\par
+ Reference String : 3, 4, 5, 6, 3, 4, 7, 3, 4, 5, 6, 7, 2, 4, 6 \par
+\ul\b0 Answer:\par
+\ulnone #include<stdio.h>\par
+#define MAX 20\par
+\par
+int frames[MAX],ref[MAX],mem[MAX][MAX],faults,sp,m,n,time[MAX];\par
+\par
+void accept()\par
+\{\par
+\tab int i;\par
+\par
+\tab printf("Enter no.of frames:");\par
+\tab scanf("%d", &n);\par
+\par
+\tab printf("Enter no.of references:");\par
+\tab scanf("%d", &m);\par
+\par
+\tab printf("Enter reference string:\\n");\par
+\tab for(i=0;i<m;i++)\par
+\tab\{\par
+\tab\tab printf("[%d]=",i);\par
+\tab\tab scanf("%d",&ref[i]);\par
+\tab\}\par
+\}\par
+\par
+void disp()\par
+\{\par
+\tab int i,j;\par
+\par
+\tab for(i=0;i<m;i++)\par
+\tab\tab printf("%3d",ref[i]);\par
+\par
+\tab printf("\\n\\n");\par
+\par
+\tab for(i=0;i<n;i++)\par
+\tab\{\par
+\tab\tab for(j=0;j<m;j++)\par
+\tab\tab\{\par
+\tab\tab\tab if(mem[i][j])\par
+\tab\tab\tab\tab printf("%3d",mem[i][j]);\par
+\tab\tab\tab else\par
+\tab\tab\tab\tab printf("   ");\par
+\tab\tab\}\par
+\tab\tab printf("\\n");\par
+\tab\}\par
+\par
+\tab printf("Total Page Faults: %d\\n",faults);\par
+\}\par
+\par
+int search(int pno)\par
+\{\par
+\tab int i;\par
+\par
+\tab for(i=0;i<n;i++)\par
+\tab\{\par
+\tab\tab if(frames[i]==pno)\par
+\tab\tab\tab return i;\par
+\tab\}\par
+\par
+\tab return -1;\par
+\}\par
+\par
+int get_lru()\par
+\{\par
+\tab int i,min_i,min=9999;\par
+\par
+\tab for(i=0;i<n;i++)\par
+\tab\{\par
+\tab\tab if(time[i]<min)\par
+\tab\tab\{\par
+\tab\tab\tab min = time[i];\par
+\tab\tab\tab min_i = i;\par
+\tab\tab\}\par
+\tab\}\par
+\par
+\tab return min_i;\par
+\}\par
+\par
+\par
+void lru()\par
+\{\par
+\tab int i,j,k;\par
+\par
+\tab for(i=0;i<m && sp<n;i++)\par
+\tab\{\par
+\tab\tab k=search(ref[i]);\par
+\tab\tab if(k==-1)\par
+\tab\tab\{\par
+\tab\tab\tab frames[sp]=ref[i];\par
+\tab\tab\tab time[sp]=i;\par
+\tab\tab\tab faults++;\par
+\tab\tab\tab sp++;\par
+\par
+\tab\tab\tab for(j=0;j<n;j++)\par
+\tab\tab\tab\tab mem[j][i]=frames[j];\par
+\tab\tab\}\par
+\tab\tab else\par
+\tab\tab\tab time[k]=i;\par
+\tab\tab\par
+\tab\}\par
+\par
+\tab for(i=0;i<m;i++)\par
+\tab\{\par
+\tab\tab k = search(ref[i]);\par
+\tab\tab if(k==-1)\par
+\tab\tab\{\par
+\tab\tab\tab sp = get_lru();\par
+\tab\tab\tab frames[sp] = ref[i];\par
+\tab\tab\tab time[sp] = i;\par
+\tab\tab\tab faults++;\par
+\par
+\tab\tab\tab for(j=0;j<n;j++)\par
+\tab\tab\tab\tab mem[j][i] = frames[j];\par
+\tab\tab\}\par
+\tab\tab else\par
+\tab\tab\tab time[k]=i;\par
+\tab\}\par
+\}\par
+\tab\tab\tab\tab\tab\tab\par
+\par
+int main()\par
+\{\par
+\tab accept();\par
+\tab lru();\par
+\tab disp();\par
+\par
+\tab return 0;\par
+\}\par
+\b Q.2 Write a program to implement the shell. It should display the command \par
+ prompt \ldblquote myshell$\rdblquote . Tokenize the command line and execute the given \par
+ command by creating the child process. Additionally it should interpret the \par
+ following \lquote list\rquote  commands as \par
+ myshell$ list f dirname :- To print names of all the files in current \par
+ directory.\par
+ myshell$ list n dirname :- To print the number of all entries in the current \par
+ directory\par
+\ul\b0 Answer:\par
+\ulnone #include <sys/types.h>\par
+#include <sys/stat.h>\par
+#include <fcntl.h>\par
+#include <stdio.h>\par
+#include <stdlib.h>\par
+#include <string.h>\par
+#include <dirent.h>\par
+\par
+void make_toks(char *s, char *tok[])\par
+\{\par
+ int i=0;\par
+ char *p;\par
+\par
+ p = strtok(s," ");\par
+ while(p!=NULL)\par
+ \{\par
+  tok[i++]=p;\par
+  p=strtok(NULL," ");\par
+ \}\par
+\par
+ tok[i]=NULL;\par
+\}\par
+\par
+void list(char *dn, char op)\par
+\{\par
+ DIR *dp;\par
+ struct dirent *entry;\par
+ int dc=0,fc=0;\par
+\par
+ dp = opendir(dn);\par
+ if(dp==NULL)\par
+ \{\par
+  printf("Dir %s not found.\\n",dn);\par
+  return;\par
+ \}\par
+\par
+ switch(op)\par
+ \{\par
+ case 'f':\par
+  while(entry=readdir(dp))\par
+  \{\par
+   if(entry->d_type==DT_REG)\par
+    printf("%s\\n",entry->d_name);\par
+  \}\par
+  break;\par
+ case 'n':\par
+  while(entry=readdir(dp))\par
+  \{\par
+   if(entry->d_type==DT_DIR) dc++;\par
+   if(entry->d_type==DT_REG) fc++;\par
+  \}\par
+ \par
+  printf("%d Dir(s)\\t%d File(s)\\n",dc,fc);\par
+  break;\par
+ case 'i':\par
+  while(entry=readdir(dp))\par
+  \{\par
+   if(entry->d_type==DT_REG)\par
+    printf("%s\\t%d\\n",entry->d_name,entry->d_fileno);\par
+  \}\par
+ \}\par
+\par
+ closedir(dp);\par
+\}\par
+\par
+int main()\par
+\{\par
+ char buff[80],*args[10];\par
+ int pid;\par
+\par
+ while(1)\par
+ \{\par
+  printf("myshell$");\par
+  fflush(stdin);\par
+  fgets(buff,80,stdin);\par
+  buff[strlen(buff)-1]='\\0';\par
+  make_toks(buff,args);\par
+  if(strcmp(args[0],"list")==0)\par
+   list(args[2],args[1][0]);\par
+  else\par
+  \{\par
+   pid = fork();\par
+   if(pid>0)\par
+    wait();\par
+   else\par
+   \{\par
+    if(execvp(args[0],args)==-1)\par
+     printf("Bad command.\\n");\par
+   \}\par
+  \}\par
+ \}\par
+\par
+ return 0;\par
+\}\par
+\par
+\b\fs32 Slip No 13\par
+\fs22 Q.1 Write a C program to implement the shell which displays the command \par
+ prompt \ldblquote myshell$\rdblquote . It accepts the command, tokenize the command line and \par
+ execute it by creating the child process. Also implement the additional \par
+ command \lquote typeline\rquote  as \par
+ typeline -a filename :- To print all lines in the file. \par
+\ul\b0 Answer:\par
+\ulnone #include <sys/types.h>\par
+#include <sys/stat.h>\par
+#include <fcntl.h>\par
+#include <stdio.h>\par
+#include <stdlib.h>\par
+#include <string.h>\par
+\par
+void make_toks(char *s, char *tok[])\par
+\{\par
+ int i=0;\par
+ char *p;\par
+\par
+ p = strtok(s," ");\par
+ while(p!=NULL)\par
+ \{\par
+  tok[i++]=p;\par
+  p=strtok(NULL," ");\par
+ \}\par
+\par
+ tok[i]=NULL;\par
+\}\par
+\par
+void typeline(char *fn, char *op)\par
+\{\par
+ int fh,i,j,n;\par
+ char c;\par
+\par
+ fh = open(fn,O_RDONLY);\par
+ if(fh==-1)\par
+ \{\par
+  printf("File %s not found.\\n",fn);\par
+  return;\par
+ \}\par
+\par
+ if(strcmp(op,"a")==0)\par
+ \{\par
+  while(read(fh,&c,1)>0)\par
+   printf("%c",c);\par
+  close(fh);\par
+  return;\par
+ \}\par
+\par
+ n = atoi(op);\par
+ if(n>0)\par
+ \{\par
+  i=0;\par
+  while(read(fh,&c,1)>0)\par
+  \{\par
+   printf("%c",c);\par
+   if(c=='\\n') i++;\par
+   if(i==n) break;\par
+  \}\par
+ \}\par
+\par
+ if(n<0)\par
+ \{\par
+  i=0;\par
+  while(read(fh,&c,1)>0)\par
+  \{\par
+   if(c=='\\n') i++;\par
+  \}\par
+  lseek(fh,0,SEEK_SET);\par
+  j=0;\par
+  while(read(fh,&c,1)>0)\par
+  \{\par
+   if(c=='\\n') j++;\par
+   if(j==i+n) break;\par
+  \}\par
+  while(read(fh,&c,1)>0)\par
+  \{\par
+   printf("%c",c);\par
+  \}\par
+ \}\par
+\par
+ close(fh);\par
+\}\par
+\par
+int main()\par
+\{\par
+ char buff[80],*args[10];\par
+ int pid;\par
+\par
+ while(1)\par
+ \{\par
+  printf("myshell$");\par
+  fflush(stdin);\par
+  fgets(buff,80,stdin);\par
+  buff[strlen(buff)-1]='\\0';\par
+  make_toks(buff,args);\par
+  if(strcmp(args[0],"typeline")==0)\par
+   typeline(args[2],args[1]);\par
+  else\par
+  \{\par
+   pid = fork();\par
+   if(pid>0)\par
+    wait();\par
+   else\par
+   \{\par
+    if(execvp(args[0],args)==-1)\par
+     printf("Bad command.\\n");\par
+   \}\par
+  \}\par
+ \}\par
+\par
+ return 0;\par
+\}\par
+\b Q.2 Write the simulation program for Round Robin scheduling for given time \par
+ quantum. The arrival time and first CPU-burst of different jobs should be input \par
+ to the system. Accept no. of Processes, arrival time and burst time. The output \par
+ should give the Gantt chart, turnaround time and waiting time for each \par
+ process. Also display the average turnaround time and average waiting time. \par
+\ul\b0  Answer:\par
+\ulnone #include<stdio.h>\par
+#include<stdlib.h>\par
+#include<string.h>\par
+\par
+typedef struct process_info\par
+\{\par
+ char pname[20];\par
+ int at,bt,ct,bt1;\par
+ struct process_info *next;\par
+\}NODE;\par
+\par
+int n,ts;\par
+NODE *first,*last;\par
+\par
+void accept_info()\par
+\{\par
+ NODE *p;\par
+ int i;\par
+\par
+ printf("Enter no.of process:");\par
+ scanf("%d",&n);\par
+\par
+ for(i=0;i<n;i++)\par
+ \{\par
+  p = (NODE*)malloc(sizeof(NODE));\par
+\par
+  printf("Enter process name:");\par
+  scanf("%s",p->pname);\par
+\par
+  printf("Enter arrival time:");\par
+  scanf("%d",&p->at);\par
+\par
+  printf("Enter first CPU burst time:");\par
+  scanf("%d",&p->bt);\par
+\par
+  p->bt1 = p->bt;\par
+  \par
+  p->next = NULL;\par
+\par
+  if(first==NULL)\par
+   first=p;\par
+  else\par
+   last->next=p;\par
+\par
+  last = p;\par
+ \}\par
+\par
+ printf("Enter time slice:");\par
+ scanf("%d",&ts);\par
+\}\par
+\par
+void print_output()\par
+\{\par
+ NODE *p;\par
+ float avg_tat=0,avg_wt=0;\par
+\par
+ printf("pname\\tat\\tbt\\tct\\ttat\\twt\\n");\par
+\par
+ p = first;\par
+ while(p!=NULL)\par
+ \{\par
+  int tat = p->ct-p->at;\par
+  int wt = tat-p->bt;\par
+  \par
+  avg_tat+=tat;\par
+  avg_wt+=wt;\par
+\par
+  printf("%s\\t%d\\t%d\\t%d\\t%d\\t%d\\n",\par
+   p->pname,p->at,p->bt,p->ct,tat,wt);\par
+  \par
+  p=p->next;\par
+ \}\par
+\par
+ printf("Avg TAT=%f\\tAvg WT=%f\\n",\par
+   avg_tat/n,avg_wt/n);\par
+\}\par
+\par
+void print_input()\par
+\{\par
+ NODE *p;\par
+\par
+ p = first;\par
+ \par
+ printf("pname\\tat\\tbt\\n");\par
+ while(p!=NULL)\par
+ \{\par
+  printf("%s\\t%d\\t%d\\n",\par
+   p->pname,p->at,p->bt1);\par
+  p = p->next;\par
+ \}\par
+\}\par
+\par
+void sort()\par
+\{\par
+ NODE *p,*q;\par
+ int t;\par
+ char name[20];\par
+\par
+ p = first;\par
+ while(p->next!=NULL)\par
+ \{\par
+  q=p->next;\par
+  while(q!=NULL)\par
+  \{\par
+   if(p->at > q->at)\par
+   \{\par
+    strcpy(name,p->pname);\par
+    strcpy(p->pname,q->pname);\par
+    strcpy(q->pname,name);\par
+\par
+    t = p->at;\par
+    p->at = q->at;\par
+    q->at = t;\par
+    \par
+    t = p->bt;\par
+    p->bt = q->bt;\par
+    q->bt = t;\par
+\par
+    t = p->ct;\par
+    p->ct = q->ct;\par
+    q->ct = t;\par
+\par
+    t = p->bt1;\par
+    p->bt1 = q->bt1;\par
+    q->bt1 = t;\par
+   \}\par
+\par
+   q=q->next;\par
+  \}\par
+ \par
+  p=p->next;\par
+ \}\par
+\}\par
+\par
+int time;\par
+\par
+int is_arrived()\par
+\{\par
+ NODE *p;\par
+\par
+ p = first;\par
+ while(p!=NULL)\par
+ \{\par
+  if(p->at<=time && p->bt1!=0)\par
+   return 1;\par
+\par
+  p=p->next;\par
+ \}\par
+\par
+ return 0;\par
+\}\par
+\par
+NODE * delq()\par
+\{\par
+ NODE *t;\par
+\par
+ t = first;\par
+ first = first->next;\par
+ t->next=NULL;\par
+\par
+ return t;\par
+\}\par
+\par
+void addq(NODE *t)\par
+\{\par
+ last->next = t;\par
+ last = t;\par
+\}\par
+\par
+struct gantt_chart\par
+\{\par
+ int start;\par
+ char pname[30];\par
+ int end;\par
+\}s[100],s1[100];\par
+\par
+int k;\par
+\par
+void rr()\par
+\{\par
+ int prev=0,n1=0;\par
+ NODE *p;\par
+\par
+ while(n1!=n)\par
+ \{\par
+  if(!is_arrived())\par
+  \{\par
+   time++;\par
+   s[k].start = prev;\par
+   strcpy(s[k].pname,"*");\par
+   s[k].end = time;\par
+   k++;\par
+   prev=time;\par
+  \}\par
+  else\par
+  \{\par
+   p = first;\par
+   while(1)\par
+   \{\par
+    if(p->at<=time && p->bt1!=0)\par
+     break;\par
+\par
+    p = delq();\par
+    addq(p);\par
+    p = first;\par
+   \}\par
+\par
+   if(p->bt1<=ts)\par
+   \{\par
+    time+=p->bt1;\par
+    p->bt1=0;\par
+   \}\par
+   else\par
+   \{\par
+    time+=ts;\par
+    p->bt1-=ts;\par
+   \}\par
+\par
+   p->ct = time;\par
+\par
+   s[k].start = prev;\par
+   strcpy(s[k].pname,p->pname);\par
+   s[k].end = time;\par
+\par
+   k++;\par
+   prev = time;\par
+   \par
+   if(p->bt1==0) n1++;\par
+\par
+   p = delq();\par
+   addq(p);\par
+  \}\par
+\par
+  print_input();\par
+ \}\par
+\}\par
+\par
+void print_gantt_chart()\par
+\{\par
+ int i,j,m;\par
+\par
+ s1[0] = s[0];\par
+ \par
+ for(i=1,j=0;i<k;i++)\par
+ \{\par
+  if(strcmp(s[i].pname,s1[j].pname)==0)\par
+   s1[j].end = s[i].end;\par
+  else\par
+   s1[++j] = s[i];\par
+ \}\par
+\par
+ printf("%d",s1[0].start);\par
+ for(i=0;i<=j;i++)\par
+ \{\par
+  m = (s1[i].end - s1[i].start);\par
+\par
+  for(k=0;k<m/2;k++)\par
+   printf("-");\par
+\par
+  printf("%s",s1[i].pname);\par
+\par
+  for(k=0;k<(m+1)/2;k++)\par
+   printf("-");\par
+\par
+  printf("%d",s1[i].end);\par
+ \}\par
+\}\par
+\par
+int main()\par
+\{\par
+ accept_info();\par
+ sort();\par
+ rr();\par
+ print_output();\par
+ print_gantt_chart();\par
+\par
+ return 0;\par
+\}\par
+\par
+\b\fs32 Slip No 14\par
+\fs22  Q.1 Write a C program to implement the shell which displays the command \par
+ prompt \ldblquote myshell$\rdblquote . It accepts the command, tokenize the command line and \par
+ execute it by creating the child process. Also implement the additional \par
+ command \lquote typeline\rquote  as \par
+ typeline +n filename :- To print first n lines in the file.\par
+\ul\b0 Answer:\par
+\ulnone #include <sys/types.h>\par
+#include <sys/stat.h>\par
+#include <fcntl.h>\par
+#include <stdio.h>\par
+#include <stdlib.h>\par
+#include <string.h>\par
+\par
+void make_toks(char *s, char *tok[])\par
+\{\par
+ int i=0;\par
+ char *p;\par
+\par
+ p = strtok(s," ");\par
+ while(p!=NULL)\par
+ \{\par
+  tok[i++]=p;\par
+  p=strtok(NULL," ");\par
+ \}\par
+\par
+ tok[i]=NULL;\par
+\}\par
+\par
+void typeline(char *fn, char *op)\par
+\{\par
+ int fh,i,j,n;\par
+ char c;\par
+\par
+ fh = open(fn,O_RDONLY);\par
+ if(fh==-1)\par
+ \{\par
+  printf("File %s not found.\\n",fn);\par
+  return;\par
+ \}\par
+\par
+ if(strcmp(op,"a")==0)\par
+ \{\par
+  while(read(fh,&c,1)>0)\par
+   printf("%c",c);\par
+  close(fh);\par
+  return;\par
+ \}\par
+\par
+ n = atoi(op);\par
+ if(n>0)\par
+ \{\par
+  i=0;\par
+  while(read(fh,&c,1)>0)\par
+  \{\par
+   printf("%c",c);\par
+   if(c=='\\n') i++;\par
+   if(i==n) break;\par
+  \}\par
+ \}\par
+\par
+ if(n<0)\par
+ \{\par
+  i=0;\par
+  while(read(fh,&c,1)>0)\par
+  \{\par
+   if(c=='\\n') i++;\par
+  \}\par
+  lseek(fh,0,SEEK_SET);\par
+  j=0;\par
+  while(read(fh,&c,1)>0)\par
+  \{\par
+   if(c=='\\n') j++;\par
+   if(j==i+n) break;\par
+  \}\par
+  while(read(fh,&c,1)>0)\par
+  \{\par
+   printf("%c",c);\par
+  \}\par
+ \}\par
+\par
+ close(fh);\par
+\}\par
+\par
+int main()\par
+\{\par
+ char buff[80],*args[10];\par
+ int pid;\par
+\par
+ while(1)\par
+ \{\par
+  printf("myshell$");\par
+  fflush(stdin);\par
+  fgets(buff,80,stdin);\par
+  buff[strlen(buff)-1]='\\0';\par
+  make_toks(buff,args);\par
+  if(strcmp(args[0],"typeline")==0)\par
+   typeline(args[2],args[1]);\par
+  else\par
+  \{\par
+   pid = fork();\par
+   if(pid>0)\par
+    wait();\par
+   else\par
+   \{\par
+    if(execvp(args[0],args)==-1)\par
+     printf("Bad command.\\n");\par
+   \}\par
+  \}\par
+ \}\par
+\par
+ return 0;\par
+\}\par
+\b   Q.2 Write a C program to simulate Non-preemptive Shortest Job First (SJF) \f1\endash\par
+ scheduling. The arrival time and first CPU-burst of different jobs should be \par
+ input to the system. Accept no. of Processes, arrival time and burst time. The \par
+ output should give Gantt chart, turnaround time and waiting time for each \par
+ process. Also find the average waiting time and turnaround time\par
+\ul\b0\f0\lang1033 Answer:\par
+\ulnone #include<stdio.h>\par
+#include<stdlib.h>\par
+#include<string.h>\par
+\par
+typedef struct process_info\par
+\{\par
+ char pname[20];\par
+ int at,bt,ct,bt1;\par
+ struct process_info *next;\par
+\}NODE;\par
+\par
+int n;\par
+NODE *first,*last;\par
+\par
+void accept_info()\par
+\{\par
+ NODE *p;\par
+ int i;\par
+\par
+ printf("Enter no.of process:");\par
+ scanf("%d",&n);\par
+\par
+ for(i=0;i<n;i++)\par
+ \{\par
+  p = (NODE*)malloc(sizeof(NODE));\par
+\par
+  printf("Enter process name:");\par
+  scanf("%s",p->pname);\par
+\par
+  printf("Enter arrival time:");\par
+  scanf("%d",&p->at);\par
+\par
+  printf("Enter first CPU burst time:");\par
+  scanf("%d",&p->bt);\par
+\par
+  \par
+  p->bt1 = p->bt;\par
+  p->next = NULL;\par
+\par
+  if(first==NULL)\par
+   first=p;\par
+  else\par
+   last->next=p;\par
+\par
+  last = p;\par
+ \}\par
+\}\par
+\par
+void print_output()\par
+\{\par
+ NODE *p;\par
+ float avg_tat=0,avg_wt=0;\par
+\par
+ printf("pname\\tat\\tbt\\tct\\ttat\\twt\\n");\par
+\par
+ p = first;\par
+ while(p!=NULL)\par
+ \{\par
+  int tat = p->ct-p->at;\par
+  int wt = tat-p->bt;\par
+  \par
+  avg_tat+=tat;\par
+  avg_wt+=wt;\par
+\par
+  printf("%s\\t%d\\t%d\\t%d\\t%d\\t%d\\n",\par
+   p->pname,p->at,p->bt,p->ct,tat,wt);\par
+  \par
+  p=p->next;\par
+ \}\par
+\par
+ printf("Avg TAT=%f\\tAvg WT=%f\\n",\par
+   avg_tat/n,avg_wt/n);\par
+\}\par
+\par
+void print_input()\par
+\{\par
+ NODE *p;\par
+\par
+ p = first;\par
+ \par
+ printf("pname\\tat\\tbt\\n");\par
+ while(p!=NULL)\par
+ \{\par
+  printf("%s\\t%d\\t%d\\n",\par
+   p->pname,p->at,p->bt1);\par
+  p = p->next;\par
+ \}\par
+\}\par
+\par
+void sort()\par
+\{\par
+ NODE *p,*q;\par
+ int t;\par
+ char name[20];\par
+\par
+ p = first;\par
+ while(p->next!=NULL)\par
+ \{\par
+  q=p->next;\par
+  while(q!=NULL)\par
+  \{\par
+   if(p->at > q->at)\par
+   \{\par
+    strcpy(name,p->pname);\par
+    strcpy(p->pname,q->pname);\par
+    strcpy(q->pname,name);\par
+\par
+    t = p->at;\par
+    p->at = q->at;\par
+    q->at = t;\par
+    \par
+    t = p->bt;\par
+    p->bt = q->bt;\par
+    q->bt = t;\par
+\par
+    t = p->ct;\par
+    p->ct = q->ct;\par
+    q->ct = t;\par
+\par
+    t = p->bt1;\par
+    p->bt1 = q->bt1;\par
+    q->bt1 = t;\par
+   \par
+   \}\par
+\par
+   q=q->next;\par
+  \}\par
+ \par
+  p=p->next;\par
+ \}\par
+\}\par
+\par
+int time;\par
+\par
+NODE * get_sjf()\par
+\{\par
+ NODE *p,*min_p=NULL;\par
+ int min=9999;\par
+\par
+ p = first;\par
+ while(p!=NULL)\par
+ \{\par
+  if(p->at<=time && p->bt1!=0 &&\par
+   p->bt1<min)\par
+  \{\par
+   min = p->bt1;\par
+   min_p = p;\par
+  \}\par
+  p=p->next;\par
+ \}\par
+\par
+ return min_p;\par
+\}\par
+\par
+struct gantt_chart\par
+\{\par
+ int start;\par
+ char pname[30];\par
+ int end;\par
+\}s[100],s1[100];\par
+\par
+int k;\par
+\par
+void sjfnp()\par
+\{\par
+ int prev=0,n1=0;\par
+ NODE *p;\par
+\par
+ while(n1!=n)\par
+ \{\par
+  p = get_sjf();\par
+\par
+  if(p==NULL)\par
+  \{\par
+   time++;\par
+   s[k].start = prev;\par
+   strcpy(s[k].pname,"*");\par
+   s[k].end = time;\par
+\par
+   prev = time;\par
+   k++;\par
+  \}\par
+  else\par
+  \{\par
+   time+=p->bt1;\par
+   s[k].start = prev;\par
+   strcpy(s[k].pname, p->pname);\par
+   s[k].end = time;\par
+\par
+   prev = time;\par
+   k++;\par
+\par
+   p->ct = time;\par
+   p->bt1 = 0;\par
+\par
+   n1++;\par
+  \}\par
+\par
+  print_input(); \par
+  sort();\par
+ \}\par
+\}\par
+\par
+void print_gantt_chart()\par
+\{\par
+ int i,j,m;\par
+\par
+ s1[0] = s[0];\par
+ \par
+ for(i=1,j=0;i<k;i++)\par
+ \{\par
+  if(strcmp(s[i].pname,s1[j].pname)==0)\par
+   s1[j].end = s[i].end;\par
+  else\par
+   s1[++j] = s[i];\par
+ \}\par
+\par
+ printf("%d",s1[0].start);\par
+ for(i=0;i<=j;i++)\par
+ \{\par
+  m = (s1[i].end - s1[i].start);\par
+\par
+  for(k=0;k<m/2;k++)\par
+   printf("-");\par
+\par
+  printf("%s",s1[i].pname);\par
+\par
+  for(k=0;k<(m+1)/2;k++)\par
+   printf("-");\par
+\par
+  printf("%d",s1[i].end);\par
+ \}\par
+\}\par
+\par
+int main()\par
+\{\par
+ accept_info();\par
+ sort();\par
+ sjfnp();\par
+ print_output();\par
+ print_gantt_chart();\par
+\par
+ return 0;\par
+\}\lang9\par
+\lang1033\par
+\b\fs32 Slip No 15\par
+\fs22 Q.1 Write a C program to implement the shell. It should display the command \par
+ prompt \ldblquote myshell$\rdblquote . Tokenize the command line and execute the given \par
+ command by creating the child process. Additionally it should interpret the \par
+ following \lquote list\rquote  commands as \par
+ myshell$ list f dirname :- To print names of all the files in current directory\par
+\ul\b0 Answer:\par
+\ulnone #include <sys/types.h>\par
+#include <sys/stat.h>\par
+#include <fcntl.h>\par
+#include <stdio.h>\par
+#include <stdlib.h>\par
+#include <string.h>\par
+#include <dirent.h>\par
+\par
+void make_toks(char *s, char *tok[])\par
+\{\par
+ int i=0;\par
+ char *p;\par
+\par
+ p = strtok(s," ");\par
+ while(p!=NULL)\par
+ \{\par
+  tok[i++]=p;\par
+  p=strtok(NULL," ");\par
+ \}\par
+\par
+ tok[i]=NULL;\par
+\}\par
+\par
+void list(char *dn, char op)\par
+\{\par
+ DIR *dp;\par
+ struct dirent *entry;\par
+ int dc=0,fc=0;\par
+\par
+ dp = opendir(dn);\par
+ if(dp==NULL)\par
+ \{\par
+  printf("Dir %s not found.\\n",dn);\par
+  return;\par
+ \}\par
+\par
+ switch(op)\par
+ \{\par
+ case 'f':\par
+  while(entry=readdir(dp))\par
+  \{\par
+   if(entry->d_type==DT_REG)\par
+    printf("%s\\n",entry->d_name);\par
+  \}\par
+  break;\par
+ case 'n':\par
+  while(entry=readdir(dp))\par
+  \{\par
+   if(entry->d_type==DT_DIR) dc++;\par
+   if(entry->d_type==DT_REG) fc++;\par
+  \}\par
+ \par
+  printf("%d Dir(s)\\t%d File(s)\\n",dc,fc);\par
+  break;\par
+ case 'i':\par
+  while(entry=readdir(dp))\par
+  \{\par
+   if(entry->d_type==DT_REG)\par
+    printf("%s\\t%d\\n",entry->d_name,entry->d_fileno);\par
+  \}\par
+ \}\par
+\par
+ closedir(dp);\par
+\}\par
+\par
+int main()\par
+\{\par
+ char buff[80],*args[10];\par
+ int pid;\par
+\par
+ while(1)\par
+ \{\par
+  printf("myshell$");\par
+  fflush(stdin);\par
+  fgets(buff,80,stdin);\par
+  buff[strlen(buff)-1]='\\0';\par
+  make_toks(buff,args);\par
+  if(strcmp(args[0],"list")==0)\par
+   list(args[2],args[1][0]);\par
+  else\par
+  \{\par
+   pid = fork();\par
+   if(pid>0)\par
+    wait();\par
+   else\par
+   \{\par
+    if(execvp(args[0],args)==-1)\par
+     printf("Bad command.\\n");\par
+   \}\par
+  \}\par
+ \}\par
+\par
+ return 0;\par
+\}\par
+\b Q.2 Write the program to simulate preemptive Shortest Job First (SJF) \f1\endash\par
+ scheduling. The arrival time and first CPU-burst of different jobs should be \par
+ input to the system. Accept no. of Processes, arrival time and burst time. The \par
+ output should give Gantt chart, turnaround time and waiting time for each \par
+ process. Also find the average waiting time and turnaround time\par
+\ul\b0\f0 Answer:\par
+\ulnone #include<stdio.h>\par
+#include<stdlib.h>\par
+#include<string.h>\par
+\par
+typedef struct process_info\par
+\{\par
+ char pname[20];\par
+ int at,bt,ct,bt1;\par
+ struct process_info *next;\par
+\}NODE;\par
+\par
+int n;\par
+NODE *first,*last;\par
+\par
+void accept_info()\par
+\{\par
+ NODE *p;\par
+ int i;\par
+\par
+ printf("Enter no.of process:");\par
+ scanf("%d",&n);\par
+\par
+ for(i=0;i<n;i++)\par
+ \{\par
+  p = (NODE*)malloc(sizeof(NODE));\par
+\par
+  printf("Enter process name:");\par
+  scanf("%s",p->pname);\par
+\par
+  printf("Enter arrival time:");\par
+  scanf("%d",&p->at);\par
+\par
+  printf("Enter first CPU burst time:");\par
+  scanf("%d",&p->bt);\par
+\par
+  p->bt1 = p->bt;\par
+  \par
+  p->next = NULL;\par
+\par
+  if(first==NULL)\par
+   first=p;\par
+  else\par
+   last->next=p;\par
+\par
+  last = p;\par
+ \}\par
+\}\par
+\par
+void print_output()\par
+\{\par
+ NODE *p;\par
+ float avg_tat=0,avg_wt=0;\par
+\par
+ printf("pname\\tat\\tbt\\tct\\ttat\\twt\\n");\par
+\par
+ p = first;\par
+ while(p!=NULL)\par
+ \{\par
+  int tat = p->ct-p->at;\par
+  int wt = tat-p->bt;\par
+  \par
+  avg_tat+=tat;\par
+  avg_wt+=wt;\par
+\par
+  printf("%s\\t%d\\t%d\\t%d\\t%d\\t%d\\n",\par
+   p->pname,p->at,p->bt,p->ct,tat,wt);\par
+  \par
+  p=p->next;\par
+ \}\par
+\par
+ printf("Avg TAT=%f\\tAvg WT=%f\\n",\par
+   avg_tat/n,avg_wt/n);\par
+\}\par
+\par
+void print_input()\par
+\{\par
+ NODE *p;\par
+\par
+ p = first;\par
+ \par
+ printf("pname\\tat\\tbt\\n");\par
+ while(p!=NULL)\par
+ \{\par
+  printf("%s\\t%d\\t%d\\n",\par
+   p->pname,p->at,p->bt1);\par
+  p = p->next;\par
+ \}\par
+\}\par
+\par
+void sort()\par
+\{\par
+ NODE *p,*q;\par
+ int t;\par
+ char name[20];\par
+\par
+ p = first;\par
+ while(p->next!=NULL)\par
+ \{\par
+  q=p->next;\par
+  while(q!=NULL)\par
+  \{\par
+   if(p->at > q->at)\par
+   \{\par
+    strcpy(name,p->pname);\par
+    strcpy(p->pname,q->pname);\par
+    strcpy(q->pname,name);\par
+\par
+    t = p->at;\par
+    p->at = q->at;\par
+    q->at = t;\par
+    \par
+    t = p->bt;\par
+    p->bt = q->bt;\par
+    q->bt = t;\par
+\par
+    t = p->ct;\par
+    p->ct = q->ct;\par
+    q->ct = t;\par
+\par
+    t = p->bt1;\par
+    p->bt1 = q->bt1;\par
+    q->bt1 = t;\par
+   \}\par
+\par
+   q=q->next;\par
+  \}\par
+ \par
+  p=p->next;\par
+ \}\par
+\}\par
+\par
+int time;\par
+\par
+NODE * get_sjf()\par
+\{\par
+ NODE *p,*min_p=NULL;\par
+ int min=9999;\par
+\par
+ p = first;\par
+ while(p!=NULL)\par
+ \{\par
+  if(p->at<=time && p->bt1!=0 &&\par
+   p->bt1<min)\par
+  \{\par
+   min = p->bt1;\par
+   min_p = p;\par
+  \}\par
+  p=p->next;\par
+ \}\par
+\par
+ return min_p;\par
+\}\par
+\par
+struct gantt_chart\par
+\{\par
+ int start;\par
+ char pname[30];\par
+ int end;\par
+\}s[100],s1[100];\par
+\par
+int k;\par
+\par
+void sjfp()\par
+\{\par
+ int prev=0,n1=0;\par
+ NODE *p;\par
+\par
+ while(n1!=n)\par
+ \{\par
+  p = get_sjf();\par
+\par
+  if(p==NULL)\par
+  \{\par
+   time++;\par
+   s[k].start = prev;\par
+   strcpy(s[k].pname,"*");\par
+   s[k].end = time;\par
+\par
+   prev = time;\par
+   k++;\par
+  \}\par
+  else\par
+  \{\par
+   time++;\par
+   s[k].start = prev;\par
+   strcpy(s[k].pname, p->pname);\par
+   s[k].end = time;\par
+\par
+   prev = time;\par
+   k++;\par
+\par
+   p->ct = time;\par
+   p->bt1--;\par
+\par
+   if(p->bt1==0)\par
+    n1++;\par
+  \}\par
+\par
+  print_input(); \par
+  sort();\par
+ \}\par
+\}\par
+\par
+void print_gantt_chart()\par
+\{\par
+ int i,j,m;\par
+\par
+ s1[0] = s[0];\par
+ \par
+ for(i=1,j=0;i<k;i++)\par
+ \{\par
+  if(strcmp(s[i].pname,s1[j].pname)==0)\par
+   s1[j].end = s[i].end;\par
+  else\par
+   s1[++j] = s[i];\par
+ \}\par
+\par
+ printf("%d",s1[0].start);\par
+ for(i=0;i<=j;i++)\par
+ \{\par
+  m = (s1[i].end - s1[i].start);\par
+\par
+  for(k=0;k<m/2;k++)\par
+   printf("-");\par
+\par
+  printf("%s",s1[i].pname);\par
+\par
+  for(k=0;k<(m+1)/2;k++)\par
+   printf("-");\par
+\par
+  printf("%d",s1[i].end);\par
+ \}\par
+\}\par
+\par
+int main()\par
+\{\par
+ accept_info();\par
+ sort();\par
+ sjfp();\par
+ print_output();\par
+ print_gantt_chart();\par
+\par
+ return 0;\par
+\}\par
+\par
+\b\fs32 Slip No 16\par
+\fs22 Q.1 Write a programto implement the toy shell. It should display the command \par
+ prompt \ldblquote myshell$\rdblquote . Tokenize the command line and execute the given \par
+ command by creating the child process. Additionally it should interpret the \par
+ following commands. \par
+ count c filename :- To print number of characters in the file.\par
+ count w filename :- To print number of words in the file. \par
+\ul\b0 Answer:\par
+\ulnone #include <sys/types.h>\par
+#include <sys/stat.h>\par
+#include <fcntl.h>\par
+#include <stdio.h>\par
+#include <stdlib.h>\par
+#include <string.h>\par
+\par
+void make_toks(char *s, char *tok[])\par
+\{\par
+ int i=0;\par
+ char *p;\par
+\par
+ p = strtok(s," ");\par
+ while(p!=NULL)\par
+ \{\par
+  tok[i++]=p;\par
+  p=strtok(NULL," ");\par
+ \}\par
+\par
+ tok[i]=NULL;\par
+\}\par
+\par
+void count(char *fn, char op)\par
+\{\par
+ int fh,cc=0,wc=0,lc=0;\par
+ char c;\par
+\par
+ fh = open(fn,O_RDONLY);\par
+ if(fh==-1)\par
+ \{\par
+  printf("File %s not found.\\n",fn);\par
+  return;\par
+ \}\par
+\par
+ while(read(fh,&c,1)>0)\par
+ \{\par
+  if(c==' ') wc++;\par
+  else if(c=='\\n')\par
+  \{\par
+   wc++;\par
+   lc++;\par
+  \}\par
+  cc++;\par
+ \}\par
+\par
+ close(fh);\par
+\par
+ switch(op)\par
+ \{\par
+ case 'c':\par
+  printf("No.of characters:%d\\n",cc);\par
+  break;\par
+ case 'w':\par
+  printf("No.of words:%d\\n",wc);\par
+  break;\par
+ case 'l':\par
+  printf("No.of lines:%d\\n",lc);\par
+  break;\par
+ \}\par
+\}\par
+\par
+int main()\par
+\{\par
+ char buff[80],*args[10];\par
+ int pid;\par
+\par
+ while(1)\par
+ \{\par
+  printf("myshell$");\par
+  fflush(stdin);\par
+  fgets(buff,80,stdin);\par
+  buff[strlen(buff)-1]='\\0';\par
+  make_toks(buff,args);\par
+  if(strcmp(args[0],"count")==0)\par
+   count(args[2],args[1][0]);\par
+  else\par
+  \{\par
+   pid = fork();\par
+   if(pid>0)\par
+    wait();\par
+   else\par
+   \{\par
+    if(execvp(args[0],args)==-1)\par
+     printf("Bad command.\\n");\par
+   \}\par
+  \}\par
+ \}\par
+\par
+ return 0;\par
+\}\par
+\b Q.2 Write the program to simulate Non preemptive priority scheduling. The \par
+ arrival time and first CPU-burst of different jobs should be input to the \par
+ system. Accept no. of Processes, arrival time and burst time. The output \par
+ should give Gantt chart, turnaround time and waiting time for each process. \par
+ Also find the average waiting time and turnaround time.\par
+\ul\b0 Answer:\par
+\ulnone #include<stdio.h>\par
+#include<stdlib.h>\par
+#include<string.h>\par
+\par
+typedef struct process_info\par
+\{\par
+ char pname[20];\par
+ int at,bt,ct,bt1,p;\par
+ struct process_info *next;\par
+\}NODE;\par
+\par
+int n;\par
+NODE *first,*last;\par
+\par
+void accept_info()\par
+\{\par
+ NODE *p;\par
+ int i;\par
+\par
+ printf("Enter no.of process:");\par
+ scanf("%d",&n);\par
+\par
+ for(i=0;i<n;i++)\par
+ \{\par
+  p = (NODE*)malloc(sizeof(NODE));\par
+\par
+  printf("Enter process name:");\par
+  scanf("%s",p->pname);\par
+\par
+  printf("Enter arrival time:");\par
+  scanf("%d",&p->at);\par
+\par
+  printf("Enter first CPU burst time:");\par
+  scanf("%d",&p->bt);\par
+\par
+  printf("Enter priority:");\par
+  scanf("%d",&p->p);\par
+\par
+  p->bt1 = p->bt;\par
+  \par
+  p->next = NULL;\par
+\par
+  if(first==NULL)\par
+   first=p;\par
+  else\par
+   last->next=p;\par
+\par
+  last = p;\par
+ \}\par
+\}\par
+\par
+void print_output()\par
+\{\par
+ NODE *p;\par
+ float avg_tat=0,avg_wt=0;\par
+\par
+ printf("pname\\tat\\tbt\\tp\\ttct\\ttat\\twt\\n");\par
+\par
+ p = first;\par
+ while(p!=NULL)\par
+ \{\par
+  int tat = p->ct-p->at;\par
+  int wt = tat-p->bt;\par
+  \par
+  avg_tat+=tat;\par
+  avg_wt+=wt;\par
+\par
+  printf("%s\\t%d\\t%d\\t%d\\t%d\\t%d\\t%d\\n",\par
+   p->pname,p->at,p->bt,p->p,p->ct,tat,wt);\par
+  \par
+  p=p->next;\par
+ \}\par
+\par
+ printf("Avg TAT=%f\\tAvg WT=%f\\n",\par
+   avg_tat/n,avg_wt/n);\par
+\}\par
+\par
+void print_input()\par
+\{\par
+ NODE *p;\par
+\par
+ p = first;\par
+ \par
+ printf("pname\\tat\\tbt\\tp\\n");\par
+ while(p!=NULL)\par
+ \{\par
+  printf("%s\\t%d\\t%d\\t%d\\n",\par
+   p->pname,p->at,p->bt1,p->p);\par
+  p = p->next;\par
+ \}\par
+\}\par
+\par
+void sort()\par
+\{\par
+ NODE *p,*q;\par
+ int t;\par
+ char name[20];\par
+\par
+ p = first;\par
+ while(p->next!=NULL)\par
+ \{\par
+  q=p->next;\par
+  while(q!=NULL)\par
+  \{\par
+   if(p->at > q->at)\par
+   \{\par
+    strcpy(name,p->pname);\par
+    strcpy(p->pname,q->pname);\par
+    strcpy(q->pname,name);\par
+\par
+    t = p->at;\par
+    p->at = q->at;\par
+    q->at = t;\par
+    \par
+    t = p->bt;\par
+    p->bt = q->bt;\par
+    q->bt = t;\par
+\par
+    t = p->ct;\par
+    p->ct = q->ct;\par
+    q->ct = t;\par
+\par
+    t = p->bt1;\par
+    p->bt1 = q->bt1;\par
+    q->bt1 = t;\par
+   \par
+    t = p->p;\par
+    p->p = q->p;\par
+    q->p = t;\par
+   \}\par
+\par
+   q=q->next;\par
+  \}\par
+ \par
+  p=p->next;\par
+ \}\par
+\}\par
+\par
+int time;\par
+\par
+NODE * get_p()\par
+\{\par
+ NODE *p,*min_p=NULL;\par
+ int min=9999;\par
+\par
+ p = first;\par
+ while(p!=NULL)\par
+ \{\par
+  if(p->at<=time && p->bt1!=0 &&\par
+   p->p<min)\par
+  \{\par
+   min = p->p;\par
+   min_p = p;\par
+  \}\par
+  p=p->next;\par
+ \}\par
+\par
+ return min_p;\par
+\}\par
+\par
+struct gantt_chart\par
+\{\par
+ int start;\par
+ char pname[30];\par
+ int end;\par
+\}s[100],s1[100];\par
+\par
+int k;\par
+\par
+void pnp()\par
+\{\par
+ int prev=0,n1=0;\par
+ NODE *p;\par
+\par
+ while(n1!=n)\par
+ \{\par
+  p = get_p();\par
+\par
+  if(p==NULL)\par
+  \{\par
+   time++;\par
+   s[k].start = prev;\par
+   strcpy(s[k].pname,"*");\par
+   s[k].end = time;\par
+\par
+   prev = time;\par
+   k++;\par
+  \}\par
+  else\par
+  \{\par
+   time+=p->bt1;\par
+   s[k].start = prev;\par
+   strcpy(s[k].pname, p->pname);\par
+   s[k].end = time;\par
+\par
+   prev = time;\par
+   k++;\par
+\par
+   p->ct = time;\par
+   p->bt1 = 0;\par
+\par
+   n1++;\par
+  \}\par
+\par
+  print_input(); \par
+  sort();\par
+ \}\par
+\}\par
+\par
+void print_gantt_chart()\par
+\{\par
+ int i,j,m;\par
+\par
+ s1[0] = s[0];\par
+ \par
+ for(i=1,j=0;i<k;i++)\par
+ \{\par
+  if(strcmp(s[i].pname,s1[j].pname)==0)\par
+   s1[j].end = s[i].end;\par
+  else\par
+   s1[++j] = s[i];\par
+ \}\par
+\par
+ printf("%d",s1[0].start);\par
+ for(i=0;i<=j;i++)\par
+ \{\par
+  m = (s1[i].end - s1[i].start);\par
+\par
+  for(k=0;k<m/2;k++)\par
+   printf("-");\par
+\par
+  printf("%s",s1[i].pname);\par
+\par
+  for(k=0;k<(m+1)/2;k++)\par
+   printf("-");\par
+\par
+  printf("%d",s1[i].end);\par
+ \}\par
+\}\par
+\par
+int main()\par
+\{\par
+ accept_info();\par
+ sort();\par
+ pnp();\par
+ print_output();\par
+ print_gantt_chart();\par
+\par
+ return 0;\par
+\}\par
+\par
+\b\fs32 Slip No 17\par
+\fs22 Q.1 Write the simulation program for demand paging and show the page \par
+ scheduling and total number of page faults according the Optimal page \par
+ replacement algorithm. Assume the memory of n frames.\par
+Reference String : 7, 5, 4, 8, 5, 7, 2, 3, 1, 3, 5, 9, 4, 6,\par
+\ul\b0 Answer:\par
+\ulnone #include<stdio.h>\par
+int n;\par
+int main()\par
+\{\par
+\tab int seq[30],fr[5],pos[5],find,flag,max,i,j,m,k,t,s;\par
+\tab int count=1,pf=0,p=0;\par
+\tab float pfr; \par
+\tab printf("Enter maximum limit of the sequence: ");\par
+\tab scanf("%d",&max);\par
+\tab printf("\\nEnter the sequence: ");\par
+ \tab for(i=0;i<max;i++)\par
+\tab scanf("%d",&seq[i]);\par
+\tab  printf("\\nEnter no. of frames: ");\par
+ \tab scanf("%d",&n);\par
+\tab fr[0]=seq[0]; \par
+\tab pf++;\par
+\tab printf("%d\\t",fr[0]);\par
+\tab i=1;\par
+\tab while(count<n)\par
+\tab\{\par
+\tab\tab flag=1; p++;\par
+\tab\tab for(j=0;j<i;j++)\par
+\tab\tab\{\par
+\tab\tab\tab if(seq[i]==seq[j]) flag=0;\par
+\tab\tab\}\par
+\tab\tab if(flag!=0)\par
+\tab\tab\{\par
+ \tab\tab\tab fr[count]=seq[i];\par
+ \tab\tab\tab printf("%d\\t",fr[count]);\par
+ \tab\tab\tab count++;\par
+\tab\tab\tab pf++;\par
+\par
+\tab\tab\}\par
+\tab\tab i++;\par
+\tab\}\par
+  \par
+\tab printf("\\n");\par
+\tab for(i=p;i<max;i++)\par
+\tab\{\par
+\tab\tab flag=1;\par
+\tab\tab for(j=0;j<n;j++)\par
+\tab\tab\{\par
+\tab\tab\tab if(seq[i]==fr[j])\par
+\tab\tab\tab flag=0;\par
+\tab\tab\}\par
+\tab\tab if(flag!=0)\par
+\tab\tab\{\par
+\tab\tab\tab for(j=0;j<n;j++)\par
+\tab\tab\tab\{\par
+\tab\tab\tab\tab m=fr[j];\par
+\tab\tab\tab\tab for(k=i;k<max;k++)\par
+\tab\tab\tab\tab\{\par
+\tab\tab\tab\tab\tab if(seq[k]==m)\par
+\tab\tab\tab\tab\tab\{\par
+    \tab\tab\tab\tab\tab\tab pos[j]=k;\par
+     \tab\tab\tab\tab\tab\tab break;\par
+\tab\tab\tab\tab\tab  \}\par
+\tab\tab\tab\tab\tab else\par
+\tab\tab\tab\tab\tab pos[j]=1;\par
+\tab\tab\tab\tab\}\par
+\tab\}\par
+\tab for(k=0;k<n;k++)\par
+\tab\{\par
+\tab\tab if(pos[k]==1)\par
+\tab\tab flag=0;\par
+\tab\}\par
+\tab if(flag!=0)\par
+\tab\tab s=findmax(pos);\par
+ \tab if(flag==0)\par
+\tab\{\par
+\tab\tab for(k=0;k<n;k++)\par
+\tab\tab\{\par
+\tab\tab\tab if(pos[k]==1)\par
+\tab\tab\tab\{\par
+\tab\tab\tab\tab s=k;\par
+ \tab\tab\tab\tab break;\par
+\tab\tab\tab\}\par
+\tab\tab\}\par
+\tab\}\par
+\tab fr[s]=seq[i];\par
+\tab for(k=0;k<n;k++)\par
+\tab printf("%d\\t",fr[k]);\par
+\tab pf++;\par
+\tab printf("\\n");\par
+\tab\}\par
+\}\par
+printf("\\nThe no. of page faults are %d",pf);\par
+\par
+\}\par
+int findmax(int a[])\par
+\{\par
+    int max,i,k=0;\par
+    max=a[0];\par
+    for(i=0;i<n;i++)\par
+   \{\par
+     if(max<a[i])\par
+     \{\par
+        max=a[i];\par
+        k=i;\par
+    \}\par
+\par
+  \}\par
+\par
+return k;\par
+\}\par
+\b Q.2 Write the program to simulate FCFS CPU-scheduling. The arrival time and \par
+ first CPU-burst of different jobs should be input to the system. Accept no. of \par
+ Processes, arrival time and burst time. The output should give Gantt chart, \par
+ turnaround time and waiting time for each process. Also find the average \par
+ waiting time and turnaround time.\par
+\ul\b0 Answer:\par
+\ulnone #include<stdio.h>\par
+#include<stdlib.h>\par
+#include<string.h>\par
+\par
+typedef struct process_info\par
+\{\par
+ char pname[20];\par
+ int at,bt,ct,bt1;\par
+ struct process_info *next;\par
+\}NODE;\par
+\par
+int n;\par
+NODE *first,*last;\par
+\par
+void accept_info()\par
+\{\par
+ NODE *p;\par
+ int i;\par
+\par
+ printf("Enter no.of process:");\par
+ scanf("%d",&n);\par
+\par
+ for(i=0;i<n;i++)\par
+ \{\par
+  p = (NODE*)malloc(sizeof(NODE));\par
+\par
+  printf("Enter process name:");\par
+  scanf("%s",p->pname);\par
+\par
+  printf("Enter arrival time:");\par
+  scanf("%d",&p->at);\par
+\par
+  printf("Enter first CPU burst time:");\par
+  scanf("%d",&p->bt);\par
+\par
+  p->bt1 = p->bt;\par
+  \par
+  p->next = NULL;\par
+\par
+  if(first==NULL)\par
+   first=p;\par
+  else\par
+   last->next=p;\par
+\par
+  last = p;\par
+ \}\par
+\}\par
+\par
+void print_output()\par
+\{\par
+ NODE *p;\par
+ float avg_tat=0,avg_wt=0;\par
+\par
+ printf("pname\\tat\\tbt\\tct\\ttat\\twt\\n");\par
+\par
+ p = first;\par
+ while(p!=NULL)\par
+ \{\par
+  int tat = p->ct-p->at;\par
+  int wt = tat-p->bt;\par
+  \par
+  avg_tat+=tat;\par
+  avg_wt+=wt;\par
+\par
+  printf("%s\\t%d\\t%d\\t%d\\t%d\\t%d\\n",\par
+   p->pname,p->at,p->bt,p->ct,tat,wt);\par
+  \par
+  p=p->next;\par
+ \}\par
+\par
+ printf("Avg TAT=%f\\tAvg WT=%f\\n",\par
+   avg_tat/n,avg_wt/n);\par
+\}\par
+\par
+void print_input()\par
+\{\par
+ NODE *p;\par
+\par
+ p = first;\par
+ \par
+ printf("pname\\tat\\tbt\\n");\par
+ while(p!=NULL)\par
+ \{\par
+  printf("%s\\t%d\\t%d\\n",\par
+   p->pname,p->at,p->bt1);\par
+  p = p->next;\par
+ \}\par
+\}\par
+\par
+void sort()\par
+\{\par
+ NODE *p,*q;\par
+ int t;\par
+ char name[20];\par
+\par
+ p = first;\par
+ while(p->next!=NULL)\par
+ \{\par
+  q=p->next;\par
+  while(q!=NULL)\par
+  \{\par
+   if(p->at > q->at)\par
+   \{\par
+    strcpy(name,p->pname);\par
+    strcpy(p->pname,q->pname);\par
+    strcpy(q->pname,name);\par
+\par
+    t = p->at;\par
+    p->at = q->at;\par
+    q->at = t;\par
+    \par
+    t = p->bt;\par
+    p->bt = q->bt;\par
+    q->bt = t;\par
+\par
+    t = p->ct;\par
+    p->ct = q->ct;\par
+    q->ct = t;\par
+\par
+    t = p->bt1;\par
+    p->bt1 = q->bt1;\par
+    q->bt1 = t;\par
+   \}\par
+\par
+   q=q->next;\par
+  \}\par
+ \par
+  p=p->next;\par
+ \}\par
+\}\par
+\par
+int time;\par
+\par
+NODE * get_fcfs()\par
+\{\par
+ NODE *p;\par
+\par
+ p = first;\par
+ while(p!=NULL)\par
+ \{\par
+  if(p->at<=time && p->bt1!=0)\par
+   return p;\par
+\par
+  p=p->next;\par
+ \}\par
+\par
+ return NULL;\par
+\}\par
+\par
+struct gantt_chart\par
+\{\par
+ int start;\par
+ char pname[30];\par
+ int end;\par
+\}s[100],s1[100];\par
+\par
+int k;\par
+\par
+void fcfs()\par
+\{\par
+ int prev=0,n1=0;\par
+ NODE *p;\par
+\par
+ while(n1!=n)\par
+ \{\par
+  p = get_fcfs();\par
+\par
+  if(p==NULL)\par
+  \{\par
+   time++;\par
+   s[k].start = prev;\par
+   strcpy(s[k].pname,"*");\par
+   s[k].end = time;\par
+\par
+   prev = time;\par
+   k++;\par
+  \}\par
+  else\par
+  \{\par
+   time+=p->bt1;\par
+   s[k].start = prev;\par
+   strcpy(s[k].pname, p->pname);\par
+   s[k].end = time;\par
+\par
+   prev = time;\par
+   k++;\par
+\par
+   p->ct = time;\par
+   p->bt1 = 0;\par
+\par
+   n1++;\par
+  \}\par
+\par
+  print_input(); \par
+  sort();\par
+ \}\par
+\}\par
+\par
+void print_gantt_chart()\par
+\{\par
+ int i,j,m;\par
+\par
+ s1[0] = s[0];\par
+ \par
+ for(i=1,j=0;i<k;i++)\par
+ \{\par
+  if(strcmp(s[i].pname,s1[j].pname)==0)\par
+   s1[j].end = s[i].end;\par
+  else\par
+   s1[++j] = s[i];\par
+ \}\par
+\par
+ printf("%d",s1[0].start);\par
+ for(i=0;i<=j;i++)\par
+ \{\par
+  m = (s1[i].end - s1[i].start);\par
+\par
+  for(k=0;k<m/2;k++)\par
+   printf("-");\par
+\par
+  printf("%s",s1[i].pname);\par
+\par
+  for(k=0;k<(m+1)/2;k++)\par
+   printf("-");\par
+\par
+  printf("%d",s1[i].end);\par
+ \}\par
+\}\par
+\par
+int main()\par
+\{\par
+ accept_info();\par
+ sort();\par
+ fcfs();\par
+ print_output();\par
+ print_gantt_chart();\par
+\par
+ return 0;\par
+\}\par
+\par
+\b\fs32 Slip No 18\par
+\fs22 Q.1 Write the simulation program for demand paging and show the page \par
+ scheduling and total number of page faults according the LRU page \par
+ replacement algorithm. Assume the memory of n frames.\par
+ Reference String : 3, 4, 5, 6, 3, 4, 7, 3, 4, 5, 6, 7, 2, 4, 6 \par
+\ul\b0 Answer:\par
+\ulnone\par
+#include<stdio.h>\par
+#define MAX 20\par
+\par
+int frames[MAX],ref[MAX],mem[MAX][MAX],faults,sp,m,n,time[MAX];\par
+\par
+void accept()\par
+\{\par
+\tab int i;\par
+\par
+\tab printf("Enter no.of frames:");\par
+\tab scanf("%d", &n);\par
+\par
+\tab printf("Enter no.of references:");\par
+\tab scanf("%d", &m);\par
+\par
+\tab printf("Enter reference string:\\n");\par
+\tab for(i=0;i<m;i++)\par
+\tab\{\par
+\tab\tab printf("[%d]=",i);\par
+\tab\tab scanf("%d",&ref[i]);\par
+\tab\}\par
+\}\par
+\par
+void disp()\par
+\{\par
+\tab int i,j;\par
+\par
+\tab for(i=0;i<m;i++)\par
+\tab\tab printf("%3d",ref[i]);\par
+\par
+\tab printf("\\n\\n");\par
+\par
+\tab for(i=0;i<n;i++)\par
+\tab\{\par
+\tab\tab for(j=0;j<m;j++)\par
+\tab\tab\{\par
+\tab\tab\tab if(mem[i][j])\par
+\tab\tab\tab\tab printf("%3d",mem[i][j]);\par
+\tab\tab\tab else\par
+\tab\tab\tab\tab printf("   ");\par
+\tab\tab\}\par
+\tab\tab printf("\\n");\par
+\tab\}\par
+\par
+\tab printf("Total Page Faults: %d\\n",faults);\par
+\}\par
+\par
+int search(int pno)\par
+\{\par
+\tab int i;\par
+\par
+\tab for(i=0;i<n;i++)\par
+\tab\{\par
+\tab\tab if(frames[i]==pno)\par
+\tab\tab\tab return i;\par
+\tab\}\par
+\par
+\tab return -1;\par
+\}\par
+\par
+int get_lru()\par
+\{\par
+\tab int i,min_i,min=9999;\par
+\par
+\tab for(i=0;i<n;i++)\par
+\tab\{\par
+\tab\tab if(time[i]<min)\par
+\tab\tab\{\par
+\tab\tab\tab min = time[i];\par
+\tab\tab\tab min_i = i;\par
+\tab\tab\}\par
+\tab\}\par
+\par
+\tab return min_i;\par
+\}\par
+\par
+\par
+void lru()\par
+\{\par
+\tab int i,j,k;\par
+\par
+\tab for(i=0;i<m && sp<n;i++)\par
+\tab\{\par
+\tab\tab k=search(ref[i]);\par
+\tab\tab if(k==-1)\par
+\tab\tab\{\par
+\tab\tab\tab frames[sp]=ref[i];\par
+\tab\tab\tab time[sp]=i;\par
+\tab\tab\tab faults++;\par
+\tab\tab\tab sp++;\par
+\par
+\tab\tab\tab for(j=0;j<n;j++)\par
+\tab\tab\tab\tab mem[j][i]=frames[j];\par
+\tab\tab\}\par
+\tab\tab else\par
+\tab\tab\tab time[k]=i;\par
+\tab\tab\par
+\tab\}\par
+\par
+\tab for(i=0;i<m;i++)\par
+\tab\{\par
+\tab\tab k = search(ref[i]);\par
+\tab\tab if(k==-1)\par
+\tab\tab\{\par
+\tab\tab\tab sp = get_lru();\par
+\tab\tab\tab frames[sp] = ref[i];\par
+\tab\tab\tab time[sp] = i;\par
+\tab\tab\tab faults++;\par
+\par
+\tab\tab\tab for(j=0;j<n;j++)\par
+\tab\tab\tab\tab mem[j][i] = frames[j];\par
+\tab\tab\}\par
+\tab\tab else\par
+\tab\tab\tab time[k]=i;\par
+\tab\}\par
+\}\par
+\tab\tab\tab\tab\tab\tab\par
+\par
+int main()\par
+\{\par
+\tab accept();\par
+\tab lru();\par
+\tab disp();\par
+\par
+\tab return 0;\par
+\}\par
+\b  Q.2 Write a C program to simulate FCFS CPU-scheduling. The arrival time and \par
+first CPU-burst of different jobs should be input to the system. Accept no. of \par
+ Processes, arrival time and burst time. The output should give Gantt chart, \par
+ turnaround time and waiting time for each process. Also find the average \par
+ waiting time and turnaround time. \par
+\ul\b0 Answer:\par
+\ulnone #include<stdio.h>\par
+#include<stdlib.h>\par
+#include<string.h>\par
+\par
+typedef struct process_info\par
+\{\par
+ char pname[20];\par
+ int at,bt,ct,bt1;\par
+ struct process_info *next;\par
+\}NODE;\par
+\par
+int n;\par
+NODE *first,*last;\par
+\par
+void accept_info()\par
+\{\par
+ NODE *p;\par
+ int i;\par
+\par
+ printf("Enter no.of process:");\par
+ scanf("%d",&n);\par
+\par
+ for(i=0;i<n;i++)\par
+ \{\par
+  p = (NODE*)malloc(sizeof(NODE));\par
+\par
+  printf("Enter process name:");\par
+  scanf("%s",p->pname);\par
+\par
+  printf("Enter arrival time:");\par
+  scanf("%d",&p->at);\par
+\par
+  printf("Enter first CPU burst time:");\par
+  scanf("%d",&p->bt);\par
+\par
+  p->bt1 = p->bt;\par
+  \par
+  p->next = NULL;\par
+\par
+  if(first==NULL)\par
+   first=p;\par
+  else\par
+   last->next=p;\par
+\par
+  last = p;\par
+ \}\par
+\}\par
+\par
+void print_output()\par
+\{\par
+ NODE *p;\par
+ float avg_tat=0,avg_wt=0;\par
+\par
+ printf("pname\\tat\\tbt\\tct\\ttat\\twt\\n");\par
+\par
+ p = first;\par
+ while(p!=NULL)\par
+ \{\par
+  int tat = p->ct-p->at;\par
+  int wt = tat-p->bt;\par
+  \par
+  avg_tat+=tat;\par
+  avg_wt+=wt;\par
+\par
+  printf("%s\\t%d\\t%d\\t%d\\t%d\\t%d\\n",\par
+   p->pname,p->at,p->bt,p->ct,tat,wt);\par
+  \par
+  p=p->next;\par
+ \}\par
+\par
+ printf("Avg TAT=%f\\tAvg WT=%f\\n",\par
+   avg_tat/n,avg_wt/n);\par
+\}\par
+\par
+void print_input()\par
+\{\par
+ NODE *p;\par
+\par
+ p = first;\par
+ \par
+ printf("pname\\tat\\tbt\\n");\par
+ while(p!=NULL)\par
+ \{\par
+  printf("%s\\t%d\\t%d\\n",\par
+   p->pname,p->at,p->bt1);\par
+  p = p->next;\par
+ \}\par
+\}\par
+\par
+void sort()\par
+\{\par
+ NODE *p,*q;\par
+ int t;\par
+ char name[20];\par
+\par
+ p = first;\par
+ while(p->next!=NULL)\par
+ \{\par
+  q=p->next;\par
+  while(q!=NULL)\par
+  \{\par
+   if(p->at > q->at)\par
+   \{\par
+    strcpy(name,p->pname);\par
+    strcpy(p->pname,q->pname);\par
+    strcpy(q->pname,name);\par
+\par
+    t = p->at;\par
+    p->at = q->at;\par
+    q->at = t;\par
+    \par
+    t = p->bt;\par
+    p->bt = q->bt;\par
+    q->bt = t;\par
+\par
+    t = p->ct;\par
+    p->ct = q->ct;\par
+    q->ct = t;\par
+\par
+    t = p->bt1;\par
+    p->bt1 = q->bt1;\par
+    q->bt1 = t;\par
+   \}\par
+\par
+   q=q->next;\par
+  \}\par
+ \par
+  p=p->next;\par
+ \}\par
+\}\par
+\par
+int time;\par
+\par
+NODE * get_fcfs()\par
+\{\par
+ NODE *p;\par
+\par
+ p = first;\par
+ while(p!=NULL)\par
+ \{\par
+  if(p->at<=time && p->bt1!=0)\par
+   return p;\par
+\par
+  p=p->next;\par
+ \}\par
+\par
+ return NULL;\par
+\}\par
+\par
+struct gantt_chart\par
+\{\par
+ int start;\par
+ char pname[30];\par
+ int end;\par
+\}s[100],s1[100];\par
+\par
+int k;\par
+\par
+void fcfs()\par
+\{\par
+ int prev=0,n1=0;\par
+ NODE *p;\par
+\par
+ while(n1!=n)\par
+ \{\par
+  p = get_fcfs();\par
+\par
+  if(p==NULL)\par
+  \{\par
+   time++;\par
+   s[k].start = prev;\par
+   strcpy(s[k].pname,"*");\par
+   s[k].end = time;\par
+\par
+   prev = time;\par
+   k++;\par
+  \}\par
+  else\par
+  \{\par
+   time+=p->bt1;\par
+   s[k].start = prev;\par
+   strcpy(s[k].pname, p->pname);\par
+   s[k].end = time;\par
+\par
+   prev = time;\par
+   k++;\par
+\par
+   p->ct = time;\par
+   p->bt1 = 0;\par
+\par
+   n1++;\par
+  \}\par
+\par
+  print_input(); \par
+  sort();\par
+ \}\par
+\}\par
+\par
+void print_gantt_chart()\par
+\{\par
+ int i,j,m;\par
+\par
+ s1[0] = s[0];\par
+ \par
+ for(i=1,j=0;i<k;i++)\par
+ \{\par
+  if(strcmp(s[i].pname,s1[j].pname)==0)\par
+   s1[j].end = s[i].end;\par
+  else\par
+   s1[++j] = s[i];\par
+ \}\par
+\par
+ printf("%d",s1[0].start);\par
+ for(i=0;i<=j;i++)\par
+ \{\par
+  m = (s1[i].end - s1[i].start);\par
+\par
+  for(k=0;k<m/2;k++)\par
+   printf("-");\par
+\par
+  printf("%s",s1[i].pname);\par
+\par
+  for(k=0;k<(m+1)/2;k++)\par
+   printf("-");\par
+\par
+  printf("%d",s1[i].end);\par
+ \}\par
+\}\par
+\par
+int main()\par
+\{\par
+ accept_info();\par
+ sort();\par
+ fcfs();\par
+ print_output();\par
+ print_gantt_chart();\par
+\par
+ return 0;\par
+\}\par
+\par
+\b\fs28 Slip No 19\par
+\fs22 Q.1 Write a C program to implement the shell. It should display the command \par
+ prompt \ldblquote myshell$\rdblquote . Tokenize the command line and execute the given \par
+ command by creating the child process. Additionally it should interpret the \par
+ following \lquote list\rquote  commands as \par
+ myshell$ list f dirname :- To print names of all the files in current \par
+ directory. \par
+\ul\b0 Answer:\par
+\ulnone #include <sys/types.h>\par
+#include <sys/stat.h>\par
+#include <fcntl.h>\par
+#include <stdio.h>\par
+#include <stdlib.h>\par
+#include <string.h>\par
+#include <dirent.h>\par
+\par
+void make_toks(char *s, char *tok[])\par
+\{\par
+ int i=0;\par
+ char *p;\par
+\par
+ p = strtok(s," ");\par
+ while(p!=NULL)\par
+ \{\par
+  tok[i++]=p;\par
+  p=strtok(NULL," ");\par
+ \}\par
+\par
+ tok[i]=NULL;\par
+\}\par
+\par
+void list(char *dn, char op)\par
+\{\par
+ DIR *dp;\par
+ struct dirent *entry;\par
+ int dc=0,fc=0;\par
+\par
+ dp = opendir(dn);\par
+ if(dp==NULL)\par
+ \{\par
+  printf("Dir %s not found.\\n",dn);\par
+  return;\par
+ \}\par
+\par
+ switch(op)\par
+ \{\par
+ case 'f':\par
+  while(entry=readdir(dp))\par
+  \{\par
+   if(entry->d_type==DT_REG)\par
+    printf("%s\\n",entry->d_name);\par
+  \}\par
+  break;\par
+ case 'n':\par
+  while(entry=readdir(dp))\par
+  \{\par
+   if(entry->d_type==DT_DIR) dc++;\par
+   if(entry->d_type==DT_REG) fc++;\par
+  \}\par
+ \par
+  printf("%d Dir(s)\\t%d File(s)\\n",dc,fc);\par
+  break;\par
+ case 'i':\par
+  while(entry=readdir(dp))\par
+  \{\par
+   if(entry->d_type==DT_REG)\par
+    printf("%s\\t%d\\n",entry->d_name,entry->d_fileno);\par
+  \}\par
+ \}\par
+\par
+ closedir(dp);\par
+\}\par
+\par
+int main()\par
+\{\par
+ char buff[80],*args[10];\par
+ int pid;\par
+\par
+ while(1)\par
+ \{\par
+  printf("myshell$");\par
+  fflush(stdin);\par
+  fgets(buff,80,stdin);\par
+  buff[strlen(buff)-1]='\\0';\par
+  make_toks(buff,args);\par
+  if(strcmp(args[0],"list")==0)\par
+   list(args[2],args[1][0]);\par
+  else\par
+  \{\par
+   pid = fork();\par
+   if(pid>0)\par
+    wait();\par
+   else\par
+   \{\par
+    if(execvp(args[0],args)==-1)\par
+     printf("Bad command.\\n");\par
+   \}\par
+  \}\par
+ \}\par
+\par
+ return 0;\par
+\}\par
+\b Q.2 Write the simulation program for Round Robin scheduling for given time \par
+ quantum. The arrival time and first CPU-burst of different jobs should be input \par
+ to the system. Accept no. of Processes, arrival time and burst time. The output \par
+ should give the Gantt chart, turnaround time and waiting time for each \par
+ process. Also display the average turnaround time and average waiting time. \par
+\ul\b0 Answer:\par
+\ulnone #include<stdio.h>\par
+#include<stdlib.h>\par
+#include<string.h>\par
+\par
+typedef struct process_info\par
+\{\par
+ char pname[20];\par
+ int at,bt,ct,bt1;\par
+ struct process_info *next;\par
+\}NODE;\par
+\par
+int n,ts;\par
+NODE *first,*last;\par
+\par
+void accept_info()\par
+\{\par
+ NODE *p;\par
+ int i;\par
+\par
+ printf("Enter no.of process:");\par
+ scanf("%d",&n);\par
+\par
+ for(i=0;i<n;i++)\par
+ \{\par
+  p = (NODE*)malloc(sizeof(NODE));\par
+\par
+  printf("Enter process name:");\par
+  scanf("%s",p->pname);\par
+\par
+  printf("Enter arrival time:");\par
+  scanf("%d",&p->at);\par
+\par
+  printf("Enter first CPU burst time:");\par
+  scanf("%d",&p->bt);\par
+\par
+  p->bt1 = p->bt;\par
+  \par
+  p->next = NULL;\par
+\par
+  if(first==NULL)\par
+   first=p;\par
+  else\par
+   last->next=p;\par
+\par
+  last = p;\par
+ \}\par
+\par
+ printf("Enter time slice:");\par
+ scanf("%d",&ts);\par
+\}\par
+\par
+void print_output()\par
+\{\par
+ NODE *p;\par
+ float avg_tat=0,avg_wt=0;\par
+\par
+ printf("pname\\tat\\tbt\\tct\\ttat\\twt\\n");\par
+\par
+ p = first;\par
+ while(p!=NULL)\par
+ \{\par
+  int tat = p->ct-p->at;\par
+  int wt = tat-p->bt;\par
+  \par
+  avg_tat+=tat;\par
+  avg_wt+=wt;\par
+\par
+  printf("%s\\t%d\\t%d\\t%d\\t%d\\t%d\\n",\par
+   p->pname,p->at,p->bt,p->ct,tat,wt);\par
+  \par
+  p=p->next;\par
+ \}\par
+\par
+ printf("Avg TAT=%f\\tAvg WT=%f\\n",\par
+   avg_tat/n,avg_wt/n);\par
+\}\par
+\par
+void print_input()\par
+\{\par
+ NODE *p;\par
+\par
+ p = first;\par
+ \par
+ printf("pname\\tat\\tbt\\n");\par
+ while(p!=NULL)\par
+ \{\par
+  printf("%s\\t%d\\t%d\\n",\par
+   p->pname,p->at,p->bt1);\par
+  p = p->next;\par
+ \}\par
+\}\par
+\par
+void sort()\par
+\{\par
+ NODE *p,*q;\par
+ int t;\par
+ char name[20];\par
+\par
+ p = first;\par
+ while(p->next!=NULL)\par
+ \{\par
+  q=p->next;\par
+  while(q!=NULL)\par
+  \{\par
+   if(p->at > q->at)\par
+   \{\par
+    strcpy(name,p->pname);\par
+    strcpy(p->pname,q->pname);\par
+    strcpy(q->pname,name);\par
+\par
+    t = p->at;\par
+    p->at = q->at;\par
+    q->at = t;\par
+    \par
+    t = p->bt;\par
+    p->bt = q->bt;\par
+    q->bt = t;\par
+\par
+    t = p->ct;\par
+    p->ct = q->ct;\par
+    q->ct = t;\par
+\par
+    t = p->bt1;\par
+    p->bt1 = q->bt1;\par
+    q->bt1 = t;\par
+   \}\par
+\par
+   q=q->next;\par
+  \}\par
+ \par
+  p=p->next;\par
+ \}\par
+\}\par
+\par
+int time;\par
+\par
+int is_arrived()\par
+\{\par
+ NODE *p;\par
+\par
+ p = first;\par
+ while(p!=NULL)\par
+ \{\par
+  if(p->at<=time && p->bt1!=0)\par
+   return 1;\par
+\par
+  p=p->next;\par
+ \}\par
+\par
+ return 0;\par
+\}\par
+\par
+NODE * delq()\par
+\{\par
+ NODE *t;\par
+\par
+ t = first;\par
+ first = first->next;\par
+ t->next=NULL;\par
+\par
+ return t;\par
+\}\par
+\par
+void addq(NODE *t)\par
+\{\par
+ last->next = t;\par
+ last = t;\par
+\}\par
+\par
+struct gantt_chart\par
+\{\par
+ int start;\par
+ char pname[30];\par
+ int end;\par
+\}s[100],s1[100];\par
+\par
+int k;\par
+\par
+void rr()\par
+\{\par
+ int prev=0,n1=0;\par
+ NODE *p;\par
+\par
+ while(n1!=n)\par
+ \{\par
+  if(!is_arrived())\par
+  \{\par
+   time++;\par
+   s[k].start = prev;\par
+   strcpy(s[k].pname,"*");\par
+   s[k].end = time;\par
+   k++;\par
+   prev=time;\par
+  \}\par
+  else\par
+  \{\par
+   p = first;\par
+   while(1)\par
+   \{\par
+    if(p->at<=time && p->bt1!=0)\par
+     break;\par
+\par
+    p = delq();\par
+    addq(p);\par
+    p = first;\par
+   \}\par
+\par
+   if(p->bt1<=ts)\par
+   \{\par
+    time+=p->bt1;\par
+    p->bt1=0;\par
+   \}\par
+   else\par
+   \{\par
+    time+=ts;\par
+    p->bt1-=ts;\par
+   \}\par
+\par
+   p->ct = time;\par
+\par
+   s[k].start = prev;\par
+   strcpy(s[k].pname,p->pname);\par
+   s[k].end = time;\par
+\par
+   k++;\par
+   prev = time;\par
+   \par
+   if(p->bt1==0) n1++;\par
+\par
+   p = delq();\par
+   addq(p);\par
+  \}\par
+\par
+  print_input();\par
+ \}\par
+\}\par
+\par
+void print_gantt_chart()\par
+\{\par
+ int i,j,m;\par
+\par
+ s1[0] = s[0];\par
+ \par
+ for(i=1,j=0;i<k;i++)\par
+ \{\par
+  if(strcmp(s[i].pname,s1[j].pname)==0)\par
+   s1[j].end = s[i].end;\par
+  else\par
+   s1[++j] = s[i];\par
+ \}\par
+\par
+ printf("%d",s1[0].start);\par
+ for(i=0;i<=j;i++)\par
+ \{\par
+  m = (s1[i].end - s1[i].start);\par
+\par
+  for(k=0;k<m/2;k++)\par
+   printf("-");\par
+\par
+  printf("%s",s1[i].pname);\par
+\par
+  for(k=0;k<(m+1)/2;k++)\par
+   printf("-");\par
+\par
+  printf("%d",s1[i].end);\par
+ \}\par
+\}\par
+\par
+int main()\par
+\{\par
+ accept_info();\par
+ sort();\par
+ rr();\par
+ print_output();\par
+ print_gantt_chart();\par
+\par
+ return 0;\par
+\}\par
+\par
+\b\fs32 Slip No 20\par
+\fs22 Q.1 Write a C program to implement the shell which displays the command \par
+ prompt \ldblquote myshell$\rdblquote . It accepts the command, tokenize the command line and \par
+ execute it by creating the child process. Also implement the additional \par
+ command \lquote typeline\rquote  as \par
+ typeline -a filename :- To print all lines in the file. \par
+\ul\b0 Answer:\par
+\ulnone #include <sys/types.h>\par
+#include <sys/stat.h>\par
+#include <fcntl.h>\par
+#include <stdio.h>\par
+#include <stdlib.h>\par
+#include <string.h>\par
+\par
+void make_toks(char *s, char *tok[])\par
+\{\par
+ int i=0;\par
+ char *p;\par
+\par
+ p = strtok(s," ");\par
+ while(p!=NULL)\par
+ \{\par
+  tok[i++]=p;\par
+  p=strtok(NULL," ");\par
+ \}\par
+\par
+ tok[i]=NULL;\par
+\}\par
+\par
+void typeline(char *fn, char *op)\par
+\{\par
+ int fh,i,j,n;\par
+ char c;\par
+\par
+ fh = open(fn,O_RDONLY);\par
+ if(fh==-1)\par
+ \{\par
+  printf("File %s not found.\\n",fn);\par
+  return;\par
+ \}\par
+\par
+ if(strcmp(op,"a")==0)\par
+ \{\par
+  while(read(fh,&c,1)>0)\par
+   printf("%c",c);\par
+  close(fh);\par
+  return;\par
+ \}\par
+\par
+ n = atoi(op);\par
+ if(n>0)\par
+ \{\par
+  i=0;\par
+  while(read(fh,&c,1)>0)\par
+  \{\par
+   printf("%c",c);\par
+   if(c=='\\n') i++;\par
+   if(i==n) break;\par
+  \}\par
+ \}\par
+\par
+ if(n<0)\par
+ \{\par
+  i=0;\par
+  while(read(fh,&c,1)>0)\par
+  \{\par
+   if(c=='\\n') i++;\par
+  \}\par
+  lseek(fh,0,SEEK_SET);\par
+  j=0;\par
+  while(read(fh,&c,1)>0)\par
+  \{\par
+   if(c=='\\n') j++;\par
+   if(j==i+n) break;\par
+  \}\par
+  while(read(fh,&c,1)>0)\par
+  \{\par
+   printf("%c",c);\par
+  \}\par
+ \}\par
+\par
+ close(fh);\par
+\}\par
+\par
+int main()\par
+\{\par
+ char buff[80],*args[10];\par
+ int pid;\par
+\par
+ while(1)\par
+ \{\par
+  printf("myshell$");\par
+  fflush(stdin);\par
+  fgets(buff,80,stdin);\par
+  buff[strlen(buff)-1]='\\0';\par
+  make_toks(buff,args);\par
+  if(strcmp(args[0],"typeline")==0)\par
+   typeline(args[2],args[1]);\par
+  else\par
+  \{\par
+   pid = fork();\par
+   if(pid>0)\par
+    wait();\par
+   else\par
+   \{\par
+    if(execvp(args[0],args)==-1)\par
+     printf("Bad command.\\n");\par
+   \}\par
+  \}\par
+ \}\par
+\par
+ return 0;\par
+\}\par
+\b Q.2 Write the program to simulate Non-preemptive Shortest Job First (SJF) \f1\endash\par
+ scheduling. The arrival time and first CPU-burst of different jobs should be \par
+ input to the system. Accept no. of Processes, arrival time and burst time. The \par
+ output should give Gantt chart, turnaround time and waiting time for each \par
+ process. Also find the average waiting time and turnaround time \par
+\ul\b0\f0 Answer:\par
+\ulnone #include<stdio.h>\par
+#include<stdlib.h>\par
+#include<string.h>\par
+\par
+typedef struct process_info\par
+\{\par
+ char pname[20];\par
+ int at,bt,ct,bt1;\par
+ struct process_info *next;\par
+\}NODE;\par
+\par
+int n;\par
+NODE *first,*last;\par
+\par
+void accept_info()\par
+\{\par
+ NODE *p;\par
+ int i;\par
+\par
+ printf("Enter no.of process:");\par
+ scanf("%d",&n);\par
+\par
+ for(i=0;i<n;i++)\par
+ \{\par
+  p = (NODE*)malloc(sizeof(NODE));\par
+\par
+  printf("Enter process name:");\par
+  scanf("%s",p->pname);\par
+\par
+  printf("Enter arrival time:");\par
+  scanf("%d",&p->at);\par
+\par
+  printf("Enter first CPU burst time:");\par
+  scanf("%d",&p->bt);\par
+\par
+  \par
+  p->bt1 = p->bt;\par
+  p->next = NULL;\par
+\par
+  if(first==NULL)\par
+   first=p;\par
+  else\par
+   last->next=p;\par
+\par
+  last = p;\par
+ \}\par
+\}\par
+\par
+void print_output()\par
+\{\par
+ NODE *p;\par
+ float avg_tat=0,avg_wt=0;\par
+\par
+ printf("pname\\tat\\tbt\\tct\\ttat\\twt\\n");\par
+\par
+ p = first;\par
+ while(p!=NULL)\par
+ \{\par
+  int tat = p->ct-p->at;\par
+  int wt = tat-p->bt;\par
+  \par
+  avg_tat+=tat;\par
+  avg_wt+=wt;\par
+\par
+  printf("%s\\t%d\\t%d\\t%d\\t%d\\t%d\\n",\par
+   p->pname,p->at,p->bt,p->ct,tat,wt);\par
+  \par
+  p=p->next;\par
+ \}\par
+\par
+ printf("Avg TAT=%f\\tAvg WT=%f\\n",\par
+   avg_tat/n,avg_wt/n);\par
+\}\par
+\par
+void print_input()\par
+\{\par
+ NODE *p;\par
+\par
+ p = first;\par
+ \par
+ printf("pname\\tat\\tbt\\n");\par
+ while(p!=NULL)\par
+ \{\par
+  printf("%s\\t%d\\t%d\\n",\par
+   p->pname,p->at,p->bt1);\par
+  p = p->next;\par
+ \}\par
+\}\par
+\par
+void sort()\par
+\{\par
+ NODE *p,*q;\par
+ int t;\par
+ char name[20];\par
+\par
+ p = first;\par
+ while(p->next!=NULL)\par
+ \{\par
+  q=p->next;\par
+  while(q!=NULL)\par
+  \{\par
+   if(p->at > q->at)\par
+   \{\par
+    strcpy(name,p->pname);\par
+    strcpy(p->pname,q->pname);\par
+    strcpy(q->pname,name);\par
+\par
+    t = p->at;\par
+    p->at = q->at;\par
+    q->at = t;\par
+    \par
+    t = p->bt;\par
+    p->bt = q->bt;\par
+    q->bt = t;\par
+\par
+    t = p->ct;\par
+    p->ct = q->ct;\par
+    q->ct = t;\par
+\par
+    t = p->bt1;\par
+    p->bt1 = q->bt1;\par
+    q->bt1 = t;\par
+   \par
+   \}\par
+\par
+   q=q->next;\par
+  \}\par
+ \par
+  p=p->next;\par
+ \}\par
+\}\par
+\par
+int time;\par
+\par
+NODE * get_sjf()\par
+\{\par
+ NODE *p,*min_p=NULL;\par
+ int min=9999;\par
+\par
+ p = first;\par
+ while(p!=NULL)\par
+ \{\par
+  if(p->at<=time && p->bt1!=0 &&\par
+   p->bt1<min)\par
+  \{\par
+   min = p->bt1;\par
+   min_p = p;\par
+  \}\par
+  p=p->next;\par
+ \}\par
+\par
+ return min_p;\par
+\}\par
+\par
+struct gantt_chart\par
+\{\par
+ int start;\par
+ char pname[30];\par
+ int end;\par
+\}s[100],s1[100];\par
+\par
+int k;\par
+\par
+void sjfnp()\par
+\{\par
+ int prev=0,n1=0;\par
+ NODE *p;\par
+\par
+ while(n1!=n)\par
+ \{\par
+  p = get_sjf();\par
+\par
+  if(p==NULL)\par
+  \{\par
+   time++;\par
+   s[k].start = prev;\par
+   strcpy(s[k].pname,"*");\par
+   s[k].end = time;\par
+\par
+   prev = time;\par
+   k++;\par
+  \}\par
+  else\par
+  \{\par
+   time+=p->bt1;\par
+   s[k].start = prev;\par
+   strcpy(s[k].pname, p->pname);\par
+   s[k].end = time;\par
+\par
+   prev = time;\par
+   k++;\par
+\par
+   p->ct = time;\par
+   p->bt1 = 0;\par
+\par
+   n1++;\par
+  \}\par
+\par
+  print_input(); \par
+  sort();\par
+ \}\par
+\}\par
+\par
+void print_gantt_chart()\par
+\{\par
+ int i,j,m;\par
+\par
+ s1[0] = s[0];\par
+ \par
+ for(i=1,j=0;i<k;i++)\par
+ \{\par
+  if(strcmp(s[i].pname,s1[j].pname)==0)\par
+   s1[j].end = s[i].end;\par
+  else\par
+   s1[++j] = s[i];\par
+ \}\par
+\par
+ printf("%d",s1[0].start);\par
+ for(i=0;i<=j;i++)\par
+ \{\par
+  m = (s1[i].end - s1[i].start);\par
+\par
+  for(k=0;k<m/2;k++)\par
+   printf("-");\par
+\par
+  printf("%s",s1[i].pname);\par
+\par
+  for(k=0;k<(m+1)/2;k++)\par
+   printf("-");\par
+\par
+  printf("%d",s1[i].end);\par
+ \}\par
+\}\par
+\par
+int main()\par
+\{\par
+ accept_info();\par
+ sort();\par
+ sjfnp();\par
+ print_output();\par
+ print_gantt_chart();\par
+\par
+ return 0;\par
+\}\par
+\par
+\b\fs32 Slip No 22\par
+\fs22 Q.1 Write a C program that demonstrates the use of nice() system call. After a \par
+ child Process is started using fork (), assign higher priority to the child using \par
+ nice () system call.\par
+\ul\b0 Answer:\par
+\ulnone #include<stdio.h>\par
+int main()\par
+\{\par
+\tab int pid,retnice;\par
+\tab printf("\\n press DEL to stop process ");\par
+\tab pid=fork();\par
+\tab for(;;)\par
+\tab\{\par
+\tab\tab if(pid==0)\par
+\tab\tab\{\par
+\tab\tab\tab retnice=nice(4);\par
+\tab\tab\tab printf("child gets higher CPU priority %d\\n",retnice);\par
+\tab\tab\tab sleep(1);\par
+\tab\tab\}\par
+\tab\tab else\par
+\tab\tab\{\par
+\tab\tab\tab retnice=nice(-5);\par
+\tab\tab\tab printf("Parent gets lower CPU priority %d \\n",retnice);\par
+\tab\tab\tab sleep(1);\par
+\tab\tab\}\par
+\tab\}\par
+\par
+\par
+\}\par
+\b Q.2 Write a C program to simulate Non preemptive priority scheduling. The \par
+ arrival time and first CPU-burst of different jobs should be input to the \par
+ system. Accept no. of Processes, arrival time and burst time. The output \par
+ should give Gantt chart, turnaround time and waiting time for each \par
+ process. Also find the average waiting time and turnaround\par
+ time.\par
+\ul\b0 Answer:\par
+\ulnone #include<stdio.h>\par
+#include<stdlib.h>\par
+#include<string.h>\par
+\par
+typedef struct process_info\par
+\{\par
+ char pname[20];\par
+ int at,bt,ct,bt1,p;\par
+ struct process_info *next;\par
+\}NODE;\par
+\par
+int n;\par
+NODE *first,*last;\par
+\par
+void accept_info()\par
+\{\par
+ NODE *p;\par
+ int i;\par
+\par
+ printf("Enter no.of process:");\par
+ scanf("%d",&n);\par
+\par
+ for(i=0;i<n;i++)\par
+ \{\par
+  p = (NODE*)malloc(sizeof(NODE));\par
+\par
+  printf("Enter process name:");\par
+  scanf("%s",p->pname);\par
+\par
+  printf("Enter arrival time:");\par
+  scanf("%d",&p->at);\par
+\par
+  printf("Enter first CPU burst time:");\par
+  scanf("%d",&p->bt);\par
+\par
+  printf("Enter priority:");\par
+  scanf("%d",&p->p);\par
+\par
+  p->bt1 = p->bt;\par
+  \par
+  p->next = NULL;\par
+\par
+  if(first==NULL)\par
+   first=p;\par
+  else\par
+   last->next=p;\par
+\par
+  last = p;\par
+ \}\par
+\}\par
+\par
+void print_output()\par
+\{\par
+ NODE *p;\par
+ float avg_tat=0,avg_wt=0;\par
+\par
+ printf("pname\\tat\\tbt\\tp\\ttct\\ttat\\twt\\n");\par
+\par
+ p = first;\par
+ while(p!=NULL)\par
+ \{\par
+  int tat = p->ct-p->at;\par
+  int wt = tat-p->bt;\par
+  \par
+  avg_tat+=tat;\par
+  avg_wt+=wt;\par
+\par
+  printf("%s\\t%d\\t%d\\t%d\\t%d\\t%d\\t%d\\n",\par
+   p->pname,p->at,p->bt,p->p,p->ct,tat,wt);\par
+  \par
+  p=p->next;\par
+ \}\par
+\par
+ printf("Avg TAT=%f\\tAvg WT=%f\\n",\par
+   avg_tat/n,avg_wt/n);\par
+\}\par
+\par
+void print_input()\par
+\{\par
+ NODE *p;\par
+\par
+ p = first;\par
+ \par
+ printf("pname\\tat\\tbt\\tp\\n");\par
+ while(p!=NULL)\par
+ \{\par
+  printf("%s\\t%d\\t%d\\t%d\\n",\par
+   p->pname,p->at,p->bt1,p->p);\par
+  p = p->next;\par
+ \}\par
+\}\par
+\par
+void sort()\par
+\{\par
+ NODE *p,*q;\par
+ int t;\par
+ char name[20];\par
+\par
+ p = first;\par
+ while(p->next!=NULL)\par
+ \{\par
+  q=p->next;\par
+  while(q!=NULL)\par
+  \{\par
+   if(p->at > q->at)\par
+   \{\par
+    strcpy(name,p->pname);\par
+    strcpy(p->pname,q->pname);\par
+    strcpy(q->pname,name);\par
+\par
+    t = p->at;\par
+    p->at = q->at;\par
+    q->at = t;\par
+    \par
+    t = p->bt;\par
+    p->bt = q->bt;\par
+    q->bt = t;\par
+\par
+    t = p->ct;\par
+    p->ct = q->ct;\par
+    q->ct = t;\par
+\par
+    t = p->bt1;\par
+    p->bt1 = q->bt1;\par
+    q->bt1 = t;\par
+   \par
+    t = p->p;\par
+    p->p = q->p;\par
+    q->p = t;\par
+   \}\par
+\par
+   q=q->next;\par
+  \}\par
+ \par
+  p=p->next;\par
+ \}\par
+\}\par
+\par
+int time;\par
+\par
+NODE * get_p()\par
+\{\par
+ NODE *p,*min_p=NULL;\par
+ int min=9999;\par
+\par
+ p = first;\par
+ while(p!=NULL)\par
+ \{\par
+  if(p->at<=time && p->bt1!=0 &&\par
+   p->p<min)\par
+  \{\par
+   min = p->p;\par
+   min_p = p;\par
+  \}\par
+  p=p->next;\par
+ \}\par
+\par
+ return min_p;\par
+\}\par
+\par
+struct gantt_chart\par
+\{\par
+ int start;\par
+ char pname[30];\par
+ int end;\par
+\}s[100],s1[100];\par
+\par
+int k;\par
+\par
+void pnp()\par
+\{\par
+ int prev=0,n1=0;\par
+ NODE *p;\par
+\par
+ while(n1!=n)\par
+ \{\par
+  p = get_p();\par
+\par
+  if(p==NULL)\par
+  \{\par
+   time++;\par
+   s[k].start = prev;\par
+   strcpy(s[k].pname,"*");\par
+   s[k].end = time;\par
+\par
+   prev = time;\par
+   k++;\par
+  \}\par
+  else\par
+  \{\par
+   time+=p->bt1;\par
+   s[k].start = prev;\par
+   strcpy(s[k].pname, p->pname);\par
+   s[k].end = time;\par
+\par
+   prev = time;\par
+   k++;\par
+\par
+   p->ct = time;\par
+   p->bt1 = 0;\par
+\par
+   n1++;\par
+  \}\par
+\par
+  print_input(); \par
+  sort();\par
+ \}\par
+\}\par
+\par
+void print_gantt_chart()\par
+\{\par
+ int i,j,m;\par
+\par
+ s1[0] = s[0];\par
+ \par
+ for(i=1,j=0;i<k;i++)\par
+ \{\par
+  if(strcmp(s[i].pname,s1[j].pname)==0)\par
+   s1[j].end = s[i].end;\par
+  else\par
+   s1[++j] = s[i];\par
+ \}\par
+\par
+ printf("%d",s1[0].start);\par
+ for(i=0;i<=j;i++)\par
+ \{\par
+  m = (s1[i].end - s1[i].start);\par
+\par
+  for(k=0;k<m/2;k++)\par
+   printf("-");\par
+\par
+  printf("%s",s1[i].pname);\par
+\par
+  for(k=0;k<(m+1)/2;k++)\par
+   printf("-");\par
+\par
+  printf("%d",s1[i].end);\par
+ \}\par
+\}\par
+\par
+int main()\par
+\{\par
+ accept_info();\par
+ sort();\par
+ pnp();\par
+ print_output();\par
+ print_gantt_chart();\par
+\par
+ return 0;\par
+\}\par
+\par
+\b\fs32 Slip No 23\par
+\fs22 Q.1 Write a C program to illustrate the concept of orphan process. Parent process \par
+ creates a child and terminates before child has finished its task. So child \par
+ process becomes orphan process. (Use fork(), sleep(), getpid(), getppid())\par
+\ul\b0 Answer:\par
+\ulnone #include <stdio.h>\par
+#include <sys/types.h>\par
+#include <unistd.h>\par
+\par
+int main()\par
+\{\par
+    // fork() Create a child process\par
+\par
+    int pid = fork();\par
+    if (pid > 0) \{\par
+        //getpid() returns process id\par
+        // while getppid() will return parent process id\par
+        printf("Parent process\\n");\par
+        printf("ID : %d\\n\\n", getpid());\par
+    \}\par
+    else if (pid == 0) \{\par
+        printf("Child process\\n");\par
+        // getpid() will return process id of child process\par
+        printf("ID: %d\\n", getpid());\par
+        // getppid() will return parent process id of child process\par
+        printf("Parent -ID: %d\\n\\n", getppid());\par
+\par
+        sleep(10);\par
+\par
+        // At this time parent process has finished.\par
+        // So if u will check parent process id\par
+        // it will show different process id\par
+        printf("\\nChild process \\n");\par
+        printf("ID: %d\\n", getpid());\par
+        printf("Parent -ID: %d\\n", getppid());\par
+    \}\par
+    else \{\par
+        printf("Failed to create child process");\par
+    \}\par
+\par
+    return 0;\par
+\}\par
+\b Q.2 Write the simulation program for demand paging and show the page \par
+ scheduling and total number of page faults according the Optimal page \par
+ replacement algorithm. Assume the memory of n frames.\par
+ Reference String : 7, 5, 4, 8, 5, 7, 2, 3, 1, 3, 5, 9, 4, 6, \par
+Answer:\par
+\b0 #include<stdio.h>\par
+int n;\par
+int main()\par
+\{\par
+\tab int seq[30],fr[5],pos[5],find,flag,max,i,j,m,k,t,s;\par
+\tab int count=1,pf=0,p=0;\par
+\tab float pfr; \par
+\tab printf("Enter maximum limit of the sequence: ");\par
+\tab scanf("%d",&max);\par
+\tab printf("\\nEnter the sequence: ");\par
+ \tab for(i=0;i<max;i++)\par
+\tab scanf("%d",&seq[i]);\par
+\tab  printf("\\nEnter no. of frames: ");\par
+ \tab scanf("%d",&n);\par
+\tab fr[0]=seq[0]; \par
+\tab pf++;\par
+\tab printf("%d\\t",fr[0]);\par
+\tab i=1;\par
+\tab while(count<n)\par
+\tab\{\par
+\tab\tab flag=1; p++;\par
+\tab\tab for(j=0;j<i;j++)\par
+\tab\tab\{\par
+\tab\tab\tab if(seq[i]==seq[j]) flag=0;\par
+\tab\tab\}\par
+\tab\tab if(flag!=0)\par
+\tab\tab\{\par
+ \tab\tab\tab fr[count]=seq[i];\par
+ \tab\tab\tab printf("%d\\t",fr[count]);\par
+ \tab\tab\tab count++;\par
+\tab\tab\tab pf++;\par
+\par
+\tab\tab\}\par
+\tab\tab i++;\par
+\tab\}\par
+  \par
+\tab printf("\\n");\par
+\tab for(i=p;i<max;i++)\par
+\tab\{\par
+\tab\tab flag=1;\par
+\tab\tab for(j=0;j<n;j++)\par
+\tab\tab\{\par
+\tab\tab\tab if(seq[i]==fr[j])\par
+\tab\tab\tab flag=0;\par
+\tab\tab\}\par
+\tab\tab if(flag!=0)\par
+\tab\tab\{\par
+\tab\tab\tab for(j=0;j<n;j++)\par
+\tab\tab\tab\{\par
+\tab\tab\tab\tab m=fr[j];\par
+\tab\tab\tab\tab for(k=i;k<max;k++)\par
+\tab\tab\tab\tab\{\par
+\tab\tab\tab\tab\tab if(seq[k]==m)\par
+\tab\tab\tab\tab\tab\{\par
+    \tab\tab\tab\tab\tab\tab pos[j]=k;\par
+     \tab\tab\tab\tab\tab\tab break;\par
+\tab\tab\tab\tab\tab  \}\par
+\tab\tab\tab\tab\tab else\par
+\tab\tab\tab\tab\tab pos[j]=1;\par
+\tab\tab\tab\tab\}\par
+\tab\}\par
+\tab for(k=0;k<n;k++)\par
+\tab\{\par
+\tab\tab if(pos[k]==1)\par
+\tab\tab flag=0;\par
+\tab\}\par
+\tab if(flag!=0)\par
+\tab\tab s=findmax(pos);\par
+ \tab if(flag==0)\par
+\tab\{\par
+\tab\tab for(k=0;k<n;k++)\par
+\tab\tab\{\par
+\tab\tab\tab if(pos[k]==1)\par
+\tab\tab\tab\{\par
+\tab\tab\tab\tab s=k;\par
+ \tab\tab\tab\tab break;\par
+\tab\tab\tab\}\par
+\tab\tab\}\par
+\tab\}\par
+\tab fr[s]=seq[i];\par
+\tab for(k=0;k<n;k++)\par
+\tab printf("%d\\t",fr[k]);\par
+\tab pf++;\par
+\tab printf("\\n");\par
+\tab\}\par
+\}\par
+printf("\\nThe no. of page faults are %d",pf);\par
+\par
+\}\par
+int findmax(int a[])\par
+\{\par
+    int max,i,k=0;\par
+    max=a[0];\par
+    for(i=0;i<n;i++)\par
+   \{\par
+     if(max<a[i])\par
+     \{\par
+        max=a[i];\par
+        k=i;\par
+    \}\par
+\par
+  \}\par
+\par
+return k;\par
+\}\par
+\par
+\b\fs32 Slip No 24\par
+\fs22 Q.1 Write a C program to accept n integers to be sorted. Main function \par
+ creates child process using fork system call. Parent process sorts the integers \par
+ using bubble sort and waits for child process using wait system call. Child \par
+ process sorts the integers using insertion sort\b0 .\par
+\ul Answer:\par
+\ulnone #include<stdio.h>\par
+#include<sys/types.h>\par
+#include<unistd.h>\par
+#include<sys/wait.h>\par
+void inst(int *,int);\par
+int main()\par
+\{\par
+\tab pid_t pid;\par
+\tab int n,i,j,temp,a[10];\par
+\tab printf("\\n Enter number of elements of an array:");\par
+\tab scanf("%d",&n);\par
+\tab printf("\\n store the elements in the array ");\par
+\tab for(i=0;i<n;i++)\par
+\tab\{\par
+\tab\tab scanf("%d",&a[i]);\par
+\tab\}\par
+\tab pid=fork();\par
+\tab if(pid<0)\par
+\tab\{\par
+\tab\tab perror("fork() failure");\par
+\tab\tab return 1;\par
+\tab\}\par
+\tab if(pid==0)\par
+\tab\{\par
+\tab\tab printf("This is a child process\\n");\par
+\tab\tab inst(a,n);\par
+\tab\}\par
+\tab else\par
+\tab\{\par
+\tab\tab wait(NULL);\par
+\tab\tab printf("This ia parent process\\n");\par
+\tab\tab\par
+\tab\}\par
+\tab return 0;\par
+\par
+\}\par
+\par
+void inst(int *a,int n)\par
+\{\par
+\tab printf("in insertion sort\\n");\par
+\tab int i=0,j=0,t=0;\par
+\tab for(i=1;i<n;i++)\par
+\tab\{\par
+\tab\tab t=a[i];\par
+\tab\tab j=i-1;\par
+\tab\tab while(j>=0 && t<a[j])\par
+\tab\tab\{\par
+\tab\tab\tab a[j+1]=a[j];\par
+\tab\tab\tab j=j-1;\par
+\tab\tab\}\par
+\tab\tab a[j+1]=t;\par
+\tab\}\par
+\tab for(i=0;i<n;i++)\par
+\tab\tab printf("\\n%d",a[i])\par
+\}\par
+\b Q.2 Write a C program to implement the toy shell. It should display the command \par
+ prompt \ldblquote myshell$\rdblquote . Tokenize the command line and execute the given \par
+ command by creating the child process. Additionally it should interpret the \par
+ following commands. \par
+ count c filename :- To print number of characters in the file.\par
+ count w filename :- To print number of words in the file.\par
+ count l filename :- To print number of lines in the file.\par
+\ul\b0 Answer:\par
+\ulnone #include <sys/types.h>\par
+#include <sys/stat.h>\par
+#include <fcntl.h>\par
+#include <stdio.h>\par
+#include <stdlib.h>\par
+#include <string.h>\par
+\par
+void make_toks(char *s, char *tok[])\par
+\{\par
+ int i=0;\par
+ char *p;\par
+\par
+ p = strtok(s," ");\par
+ while(p!=NULL)\par
+ \{\par
+  tok[i++]=p;\par
+  p=strtok(NULL," ");\par
+ \}\par
+\par
+ tok[i]=NULL;\par
+\}\par
+\par
+void count(char *fn, char op)\par
+\{\par
+ int fh,cc=0,wc=0,lc=0;\par
+ char c;\par
+\par
+ fh = open(fn,O_RDONLY);\par
+ if(fh==-1)\par
+ \{\par
+  printf("File %s not found.\\n",fn);\par
+  return;\par
+ \}\par
+\par
+ while(read(fh,&c,1)>0)\par
+ \{\par
+  if(c==' ') wc++;\par
+  else if(c=='\\n')\par
+  \{\par
+   wc++;\par
+   lc++;\par
+  \}\par
+  cc++;\par
+ \}\par
+\par
+ close(fh);\par
+\par
+ switch(op)\par
+ \{\par
+ case 'c':\par
+  printf("No.of characters:%d\\n",cc);\par
+  break;\par
+ case 'w':\par
+  printf("No.of words:%d\\n",wc);\par
+  break;\par
+ case 'l':\par
+  printf("No.of lines:%d\\n",lc);\par
+  break;\par
+ \}\par
+\}\par
+\par
+int main()\par
+\{\par
+ char buff[80],*args[10];\par
+ int pid;\par
+\par
+ while(1)\par
+ \{\par
+  printf("myshell$");\par
+  fflush(stdin);\par
+  fgets(buff,80,stdin);\par
+  buff[strlen(buff)-1]='\\0';\par
+  make_toks(buff,args);\par
+  if(strcmp(args[0],"count")==0)\par
+   count(args[2],args[1][0]);\par
+  else\par
+  \{\par
+   pid = fork();\par
+   if(pid>0)\par
+    wait();\par
+   else\par
+   \{\par
+    if(execvp(args[0],args)==-1)\par
+     printf("Bad command.\\n");\par
+   \}\par
+  \}\par
+ \}\par
+\par
+ return 0;\par
+\}\par
+ \par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+  \par
+ \par
+\par
+\par
+}
+ 

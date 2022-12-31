@@ -1,0 +1,2130 @@
+{\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang1033{\fonttbl{\f0\fnil\fcharset0 Calibri;}}
+{\*\generator Riched20 10.0.19041}\viewkind4\uc1 
+\pard\sa200\sl276\slmult1\b\f0\fs32\lang9 Slip No 1\par
+\fs24 Q.1)Write the simultation  program to implement demand passing and show the page sceduling and total number of pages faults according to the LFU page replacement algorithm.Assume the memory of n frames.refernce String(3,4,5,4,3,4,7,2,4,5,6,7,2,4,6)\par
+\ul\b0\fs22 Answer:\par
+\ulnone  \par
+#include<stdio.h>\par
+#define MAX 20\par
+\par
+int frames[MAX],ref[MAX],mem[MAX][MAX],faults,\par
+ sp,m,n,count[MAX];\par
+\par
+void accept()\par
+\{\par
+ int i;\par
+\par
+ printf("Enter no.of frames:");\par
+ scanf("%d", &n);\par
+\par
+ printf("Enter no.of references:");\par
+ scanf("%d", &m);\par
+\par
+ printf("Enter reference string:\\n");\par
+ for(i=0;i<m;i++)\par
+ \{\par
+  printf("[%d]=",i);\par
+  scanf("%d",&ref[i]);\par
+ \}\par
+\}\par
+\par
+void disp()\par
+\{\par
+ int i,j;\par
+\par
+ for(i=0;i<m;i++)\par
+  printf("%3d",ref[i]);\par
+\par
+ printf("\\n\\n");\par
+\par
+ for(i=0;i<n;i++)\par
+ \{\par
+  for(j=0;j<m;j++)\par
+  \{\par
+   if(mem[i][j])\par
+    printf("%3d",mem[i][j]);\par
+   else\par
+    printf("   ");\par
+  \}\par
+  printf("\\n");\par
+ \}\par
+\par
+ printf("Total Page Faults: %d\\n",faults);\par
+\}\par
+\par
+int search(int pno)\par
+\{\par
+ int i;\par
+\par
+ for(i=0;i<n;i++)\par
+ \{\par
+  if(frames[i]==pno)\par
+   return i;\par
+ \}\par
+\par
+ return -1;\par
+\}\par
+\par
+int get_lfu(int sp)\par
+\{\par
+ int i,min_i,min=9999;\par
+\par
+ i=sp;\par
+ do\par
+ \{\par
+  if(count[i]<min)\par
+  \{\par
+   min = count[i];\par
+   min_i = i;\par
+  \}\par
+  i=(i+1)%n;\par
+ \}while(i!=sp);\par
+\par
+ return min_i;\par
+\}\par
+\par
+\par
+void lfu()\par
+\{\par
+ int i,j,k;\par
+\par
+ for(i=0;i<m && sp<n;i++)\par
+ \{\par
+  k=search(ref[i]);\par
+  if(k==-1)\par
+  \{\par
+   frames[sp]=ref[i];\par
+   count[sp]++;\par
+   faults++;\par
+   sp++;\par
+\par
+   for(j=0;j<n;j++)\par
+    mem[j][i]=frames[j];\par
+  \}\par
+  else\par
+   count[k]++;\par
+  \par
+ \}\par
+\par
+ sp=0;\par
+ for(;i<m;i++)\par
+ \{\par
+  k = search(ref[i]);\par
+  if(k==-1)\par
+  \{\par
+   sp = get_lfu(sp);\par
+   frames[sp] = ref[i];\par
+   count[sp]=1;\par
+   faults++;\par
+   sp = (sp+1)%n;\par
+\par
+   for(j=0;j<n;j++)\par
+    mem[j][i] = frames[j];\par
+  \}\par
+  else\par
+   count[k]++;\par
+ \}\par
+\}\par
+      \par
+\par
+int main()\par
+\{\par
+ accept();\par
+ lfu();\par
+ disp();\par
+\par
+ return 0;\par
+\}\par
+\par
+\b\fs24 Q.2)Write a C program to implement the shell which displays the command\par
+prompt \ldblquote myshell$\rdblquote . It accepts the command, tokenize the command line and\par
+execute it by creating the child process. Also implement the additional command\par
+\lquote typeline\rquote  as\par
+typeline +n filename :- To print first n lines in the file.\par
+typeline -a filename :- To print all lines in the file. \par
+\ul\b0\fs22 Answer:\par
+\ulnone #include <sys/types.h>\par
+#include <sys/stat.h>\par
+#include <fcntl.h>\par
+#include <stdio.h>\par
+#include <stdlib.h>\par
+#include <string.h>\par
+\par
+void make_toks(char *s, char *tok[])\par
+\{\par
+ int i=0;\par
+ char *p;\par
+\par
+ p = strtok(s," ");\par
+ while(p!=NULL)\par
+ \{\par
+  tok[i++]=p;\par
+  p=strtok(NULL," ");\par
+ \}\par
+\par
+ tok[i]=NULL;\par
+\}\par
+\par
+void typeline(char *fn, char *op)\par
+\{\par
+ int fh,i,j,n;\par
+ char c;\par
+\par
+ fh = open(fn,O_RDONLY);\par
+ if(fh==-1)\par
+ \{\par
+  printf("File %s not found.\\n",fn);\par
+  return;\par
+ \}\par
+\par
+ if(strcmp(op,"a")==0)\par
+ \{\par
+  while(read(fh,&c,1)>0)\par
+   printf("%c",c);\par
+  close(fh);\par
+  return;\par
+ \}\par
+\par
+ n = atoi(op);\par
+ if(n>0)\par
+ \{\par
+  i=0;\par
+  while(read(fh,&c,1)>0)\par
+  \{\par
+   printf("%c",c);\par
+   if(c=='\\n') i++;\par
+   if(i==n) break;\par
+  \}\par
+ \}\par
+\par
+ if(n<0)\par
+ \{\par
+  i=0;\par
+  while(read(fh,&c,1)>0)\par
+  \{\par
+   if(c=='\\n') i++;\par
+  \}\par
+  lseek(fh,0,SEEK_SET);\par
+  j=0;\par
+  while(read(fh,&c,1)>0)\par
+  \{\par
+   if(c=='\\n') j++;\par
+   if(j==i+n) break;\par
+  \}\par
+  while(read(fh,&c,1)>0)\par
+  \{\par
+   printf("%c",c);\par
+  \}\par
+ \}\par
+\par
+ close(fh);\par
+\}\par
+\par
+int main()\par
+\{\par
+ char buff[80],*args[10];\par
+ int pid;\par
+\par
+ while(1)\par
+ \{\par
+  printf("myshell$");\par
+  fflush(stdin);\par
+  fgets(buff,80,stdin);\par
+  buff[strlen(buff)-1]='\\0';\par
+  make_toks(buff,args);\par
+  if(strcmp(args[0],"typeline")==0)\par
+   typeline(args[2],args[1]);\par
+  else\par
+  \{\par
+   pid = fork();\par
+   if(pid>0)\par
+    wait();\par
+   else\par
+   \{\par
+    if(execvp(args[0],args)==-1)\par
+     printf("Bad command.\\n");\par
+   \}\par
+  \}\par
+ \}\par
+\par
+ return 0;\par
+\}\par
+\par
+\par
+\b\fs32 Slip No 2\par
+\fs24 Q.1)Write the simulation program for demand paging and show the page\par
+ scheduling and total number of page faults according the FIFO page\par
+ replacement algorithm. Assume the memory of n frames.\par
+ Reference String : 3, 4, 5, 6, 3, 4, 7, 3, 4, 5, 6, 7, 2, 4, 6 \par
+\ul\b0\fs22 Answer:\par
+\ulnone #include<stdio.h>\par
+#define MAX 20\par
+\par
+int frames[MAX],ref[MAX],mem[MAX][MAX],faults,sp,m,n;\par
+\par
+void accept()\par
+\{\par
+ int i;\par
+\par
+ printf("Enter no.of frames:");\par
+ scanf("%d", &n);\par
+\par
+ printf("Enter no.of references:");\par
+ scanf("%d", &m);\par
+\par
+ printf("Enter reference string:\\n");\par
+ for(i=0;i<m;i++)\par
+ \{\par
+  printf("[%d]=",i);\par
+  scanf("%d",&ref[i]);\par
+ \}\par
+\}\par
+\par
+void disp()\par
+\{\par
+ int i,j;\par
+\par
+ for(i=0;i<m;i++)\par
+  printf("%3d",ref[i]);\par
+\par
+ printf("\\n\\n");\par
+\par
+ for(i=0;i<n;i++)\par
+ \{\par
+  for(j=0;j<m;j++)\par
+  \{\par
+   if(mem[i][j])\par
+    printf("%3d",mem[i][j]);\par
+   else\par
+    printf("   ");\par
+  \}\par
+  printf("\\n");\par
+ \}\par
+\par
+ printf("Total Page Faults: %d\\n",faults);\par
+\}\par
+\par
+int search(int pno)\par
+\{\par
+ int i;\par
+\par
+ for(i=0;i<n;i++)\par
+ \{\par
+  if(frames[i]==pno)\par
+   return i;\par
+ \}\par
+\par
+ return -1;\par
+\}\par
+\par
+void fifo()\par
+\{\par
+ int i,j;\par
+\par
+ for(i=0;i<m;i++)\par
+ \{\par
+  if(search(ref[i])==-1)\par
+  \{\par
+   frames[sp] = ref[i];\par
+   sp = (sp+1)%n;\par
+   faults++;\par
+   for(j=0;j<n;j++)\par
+    mem[j][i] = frames[j];\par
+\par
+  \}\par
+ \}\par
+\}\par
+\par
+int main()\par
+\{\par
+ accept();\par
+ fifo();\par
+ disp();\par
+\par
+ return 0;\par
+\}\par
+\par
+\b\fs24 Q.2)Write a program to implement the shell. It should display the command\par
+ prompt \ldblquote myshell$\rdblquote . Tokenize the command line and execute the given\par
+ command by creating the child process. Additionally it should interpret the\par
+ following \lquote list\rquote  commands as\par
+ myshell$ list f dirname :- To print names of all the files in current\par
+ directory.\par
+ myshell$ list n dirname :- To print the number of all entries in the current\par
+ directory.\par
+\ul\b0\fs22 Answer:\par
+\ulnone #include <sys/types.h>\par
+#include <sys/stat.h>\par
+#include <fcntl.h>\par
+#include <stdio.h>\par
+#include <stdlib.h>\par
+#include <string.h>\par
+#include <dirent.h>\par
+\par
+void make_toks(char *s, char *tok[])\par
+\{\par
+ int i=0;\par
+ char *p;\par
+\par
+ p = strtok(s," ");\par
+ while(p!=NULL)\par
+ \{\par
+  tok[i++]=p;\par
+  p=strtok(NULL," ");\par
+ \}\par
+\par
+ tok[i]=NULL;\par
+\}\par
+\par
+void list(char *dn, char op)\par
+\{\par
+ DIR *dp;\par
+ struct dirent *entry;\par
+ int dc=0,fc=0;\par
+\par
+ dp = opendir(dn);\par
+ if(dp==NULL)\par
+ \{\par
+  printf("Dir %s not found.\\n",dn);\par
+  return;\par
+ \}\par
+\par
+ switch(op)\par
+ \{\par
+ case 'f':\par
+  while(entry=readdir(dp))\par
+  \{\par
+   if(entry->d_type==DT_REG)\par
+    printf("%s\\n",entry->d_name);\par
+  \}\par
+  break;\par
+ case 'n':\par
+  while(entry=readdir(dp))\par
+  \{\par
+   if(entry->d_type==DT_DIR) dc++;\par
+   if(entry->d_type==DT_REG) fc++;\par
+  \}\par
+ \par
+  printf("%d Dir(s)\\t%d File(s)\\n",dc,fc);\par
+  break;\par
+ case 'i':\par
+  while(entry=readdir(dp))\par
+  \{\par
+   if(entry->d_type==DT_REG)\par
+    printf("%s\\t%d\\n",entry->d_name,entry->d_fileno);\par
+  \}\par
+ \}\par
+\par
+ closedir(dp);\par
+\}\par
+\par
+int main()\par
+\{\par
+ char buff[80],*args[10];\par
+ int pid;\par
+\par
+ while(1)\par
+ \{\par
+  printf("myshell$");\par
+  fflush(stdin);\par
+  fgets(buff,80,stdin);\par
+  buff[strlen(buff)-1]='\\0';\par
+  make_toks(buff,args);\par
+  if(strcmp(args[0],"list")==0)\par
+   list(args[2],args[1][0]);\par
+  else\par
+  \{\par
+   pid = fork();\par
+   if(pid>0)\par
+    wait();\par
+   else\par
+   \{\par
+    if(execvp(args[0],args)==-1)\par
+     printf("Bad command.\\n");\par
+   \}\par
+  \}\par
+ \}\par
+\par
+ return 0;\par
+\}\par
+\par
+Slip No 3\par
+\b\fs24 Q.1)Write the simulation program to implement demand paging and show the page\par
+ scheduling and total number of page faults according to the LRU (using\par
+ counter method) page replacement algorithm. Assume the memory of n\par
+ frames.\par
+ Reference String : 3,5,7,2,5,1,2,3,1,3,5,3,1,6,2\par
+\ul\b0\fs22 Answer:\par
+\ulnone #include<stdio.h>\par
+#define MAX 20\par
+\par
+int frames[MAX],ref[MAX],mem[MAX][MAX],faults,sp,m,n,time[MAX];\par
+\par
+void accept()\par
+\{\par
+\tab int i;\par
+\par
+\tab printf("Enter no.of frames:");\par
+\tab scanf("%d", &n);\par
+\par
+\tab printf("Enter no.of references:");\par
+\tab scanf("%d", &m);\par
+\par
+\tab printf("Enter reference string:\\n");\par
+\tab for(i=0;i<m;i++)\par
+\tab\{\par
+\tab\tab printf("[%d]=",i);\par
+\tab\tab scanf("%d",&ref[i]);\par
+\tab\}\par
+\}\par
+\par
+void disp()\par
+\{\par
+\tab int i,j;\par
+\par
+\tab for(i=0;i<m;i++)\par
+\tab\tab printf("%3d",ref[i]);\par
+\par
+\tab printf("\\n\\n");\par
+\par
+\tab for(i=0;i<n;i++)\par
+\tab\{\par
+\tab\tab for(j=0;j<m;j++)\par
+\tab\tab\{\par
+\tab\tab\tab if(mem[i][j])\par
+\tab\tab\tab\tab printf("%3d",mem[i][j]);\par
+\tab\tab\tab else\par
+\tab\tab\tab\tab printf("   ");\par
+\tab\tab\}\par
+\tab\tab printf("\\n");\par
+\tab\}\par
+\par
+\tab printf("Total Page Faults: %d\\n",faults);\par
+\}\par
+\par
+int search(int pno)\par
+\{\par
+\tab int i;\par
+\par
+\tab for(i=0;i<n;i++)\par
+\tab\{\par
+\tab\tab if(frames[i]==pno)\par
+\tab\tab\tab return i;\par
+\tab\}\par
+\par
+\tab return -1;\par
+\}\par
+\par
+int get_lru()\par
+\{\par
+\tab int i,min_i,min=9999;\par
+\par
+\tab for(i=0;i<n;i++)\par
+\tab\{\par
+\tab\tab if(time[i]<min)\par
+\tab\tab\{\par
+\tab\tab\tab min = time[i];\par
+\tab\tab\tab min_i = i;\par
+\tab\tab\}\par
+\tab\}\par
+\par
+\tab return min_i;\par
+\}\par
+\par
+\par
+void lru()\par
+\{\par
+\tab int i,j,k;\par
+\par
+\tab for(i=0;i<m && sp<n;i++)\par
+\tab\{\par
+\tab\tab k=search(ref[i]);\par
+\tab\tab if(k==-1)\par
+\tab\tab\{\par
+\tab\tab\tab frames[sp]=ref[i];\par
+\tab\tab\tab time[sp]=i;\par
+\tab\tab\tab faults++;\par
+\tab\tab\tab sp++;\par
+\par
+\tab\tab\tab for(j=0;j<n;j++)\par
+\tab\tab\tab\tab mem[j][i]=frames[j];\par
+\tab\tab\}\par
+\tab\tab else\par
+\tab\tab\tab time[k]=i;\par
+\tab\tab\par
+\tab\}\par
+\par
+\tab for(i=0;i<m;i++)\par
+\tab\{\par
+\tab\tab k = search(ref[i]);\par
+\tab\tab if(k==-1)\par
+\tab\tab\{\par
+\tab\tab\tab sp = get_lru();\par
+\tab\tab\tab frames[sp] = ref[i];\par
+\tab\tab\tab time[sp] = i;\par
+\tab\tab\tab faults++;\par
+\par
+\tab\tab\tab for(j=0;j<n;j++)\par
+\tab\tab\tab\tab mem[j][i] = frames[j];\par
+\tab\tab\}\par
+\tab\tab else\par
+\tab\tab\tab time[k]=i;\par
+\tab\}\par
+\}\par
+\tab\tab\tab\tab\tab\tab\par
+\par
+int main()\par
+\{\par
+\tab accept();\par
+\tab lru();\par
+\tab disp();\par
+\par
+\tab return 0;\par
+\}\par
+\b\fs24 Q.2) Write a programto implement the toy shell. It should display the command\par
+ prompt \ldblquote myshell$\rdblquote . Tokenize the command line and execute the given\par
+ command by creating the child process. Additionally it should interpret the\par
+ following commands.\par
+ count c filename :- To print number of characters in the file.\par
+ count w filename :- To print number of words in the file.\par
+ count l filename :- To print number of lines in the file.\par
+\ul\b0\fs22 Answer:\par
+\ulnone #include <sys/types.h>\par
+#include <sys/stat.h>\par
+#include <fcntl.h>\par
+#include <stdio.h>\par
+#include <stdlib.h>\par
+#include <string.h>\par
+\par
+void make_toks(char *s, char *tok[])\par
+\{\par
+ int i=0;\par
+ char *p;\par
+\par
+ p = strtok(s," ");\par
+ while(p!=NULL)\par
+ \{\par
+  tok[i++]=p;\par
+  p=strtok(NULL," ");\par
+ \}\par
+\par
+ tok[i]=NULL;\par
+\}\par
+\par
+void count(char *fn, char op)\par
+\{\par
+ int fh,cc=0,wc=0,lc=0;\par
+ char c;\par
+\par
+ fh = open(fn,O_RDONLY);\par
+ if(fh==-1)\par
+ \{\par
+  printf("File %s not found.\\n",fn);\par
+  return;\par
+ \}\par
+\par
+ while(read(fh,&c,1)>0)\par
+ \{\par
+  if(c==' ') wc++;\par
+  else if(c=='\\n')\par
+  \{\par
+   wc++;\par
+   lc++;\par
+  \}\par
+  cc++;\par
+ \}\par
+\par
+ close(fh);\par
+\par
+ switch(op)\par
+ \{\par
+ case 'c':\par
+  printf("No.of characters:%d\\n",cc);\par
+  break;\par
+ case 'w':\par
+  printf("No.of words:%d\\n",wc);\par
+  break;\par
+ case 'l':\par
+  printf("No.of lines:%d\\n",lc);\par
+  break;\par
+ \}\par
+\}\par
+\par
+int main()\par
+\{\par
+ char buff[80],*args[10];\par
+ int pid;\par
+\par
+ while(1)\par
+ \{\par
+  printf("myshell$");\par
+  fflush(stdin);\par
+  fgets(buff,80,stdin);\par
+  buff[strlen(buff)-1]='\\0';\par
+  make_toks(buff,args);\par
+  if(strcmp(args[0],"count")==0)\par
+   count(args[2],args[1][0]);\par
+  else\par
+  \{\par
+   pid = fork();\par
+   if(pid>0)\par
+    wait();\par
+   else\par
+   \{\par
+    if(execvp(args[0],args)==-1)\par
+     printf("Bad command.\\n");\par
+   \}\par
+  \}\par
+ \}\par
+\par
+ return 0;\par
+\}\par
+\par
+\b\fs32 Slip No 4\par
+\fs24 Q.1)Write the simulation program for demand paging and show the page\par
+ scheduling and total number of page faults according the MFU page\par
+ replacement algorithm. Assume the memory of n frames.\par
+Reference String : 8, 5, 7, 8, 5, 7, 2, 3, 7, 3, 5, 9, 4, 6, 2\par
+\ul\b0\fs22 Answer:\par
+\ulnone #include<stdio.h>\par
+#define MAX 20\par
+\par
+int frames[MAX],ref[MAX],mem[MAX][MAX],faults,\par
+ sp,m,n,count[MAX];\par
+\par
+void accept()\par
+\{\par
+ int i;\par
+\par
+ printf("Enter no.of frames:");\par
+ scanf("%d", &n);\par
+\par
+ printf("Enter no.of references:");\par
+ scanf("%d", &m);\par
+\par
+ printf("Enter reference string:\\n");\par
+ for(i=0;i<m;i++)\par
+ \{\par
+  printf("[%d]=",i);\par
+  scanf("%d",&ref[i]);\par
+ \}\par
+\}\par
+\par
+void disp()\par
+\{\par
+ int i,j;\par
+\par
+ for(i=0;i<m;i++)\par
+  printf("%3d",ref[i]);\par
+\par
+ printf("\\n\\n");\par
+\par
+ for(i=0;i<n;i++)\par
+ \{\par
+  for(j=0;j<m;j++)\par
+  \{\par
+   if(mem[i][j])\par
+    printf("%3d",mem[i][j]);\par
+   else\par
+    printf("   ");\par
+  \}\par
+  printf("\\n");\par
+ \}\par
+\par
+ printf("Total Page Faults: %d\\n",faults);\par
+\}\par
+\par
+int search(int pno)\par
+\{\par
+ int i;\par
+\par
+ for(i=0;i<n;i++)\par
+ \{\par
+  if(frames[i]==pno)\par
+   return i;\par
+ \}\par
+\par
+ return -1;\par
+\}\par
+\par
+int get_mfu(int sp)\par
+\{\par
+ int i,max_i,max=-9999;\par
+\par
+ i=sp;\par
+ do\par
+ \{\par
+  if(count[i]>max)\par
+  \{\par
+   max = count[i];\par
+   max_i = i;\par
+  \}\par
+  i=(i+1)%n;\par
+ \}while(i!=sp);\par
+\par
+ return max_i;\par
+\}\par
+\par
+void mfu()\par
+\{\par
+ int i,j,k;\par
+\par
+ for(i=0;i<m && sp<n;i++)\par
+ \{\par
+  k=search(ref[i]);\par
+  if(k==-1)\par
+  \{\par
+   frames[sp]=ref[i];\par
+   count[sp]++;\par
+   faults++;\par
+   sp++;\par
+\par
+   for(j=0;j<n;j++)\par
+    mem[j][i]=frames[j];\par
+  \}\par
+  else\par
+   count[k]++;\par
+  \par
+ \}\par
+\par
+ sp=0;\par
+ for(;i<m;i++)\par
+ \{\par
+  k = search(ref[i]);\par
+  if(k==-1)\par
+  \{\par
+   sp = get_mfu(sp);\par
+   frames[sp] = ref[i];\par
+   count[sp]=1;\par
+   faults++;\par
+   sp = (sp+1)%n;\par
+\par
+   for(j=0;j<n;j++)\par
+    mem[j][i] = frames[j];\par
+  \}\par
+  else\par
+   count[k]++;\par
+ \}\par
+\}\par
+      \par
+\par
+int main()\par
+\{\par
+ accept();\par
+ mfu();\par
+ disp();\par
+\par
+ return 0;\par
+\}\par
+\b\fs24 Q.2)Write a program to implement the shell. It should display the command\par
+ prompt \ldblquote myshell$\rdblquote . Tokenize the command line and execute the given\par
+ command by creating the child process. Additionally it should interpret the\par
+ following commands.\par
+ myshell$ search a filename pattern :- To search all the occurrence of\par
+ pattern in the file.\par
+ myshell$ search c filename pattern :- To count the number of occurrence\par
+ of pattern in the file. \par
+\ul\b0\fs22 Answer:\par
+\ulnone #include <sys/types.h>\par
+#include <sys/stat.h>\par
+#include <fcntl.h>\par
+#include <stdio.h>\par
+#include <stdlib.h>\par
+#include <string.h>\par
+\par
+void make_toks(char *s, char *tok[])\par
+\{\par
+ int i=0;\par
+ char *p;\par
+\par
+ p = strtok(s," ");\par
+ while(p!=NULL)\par
+ \{\par
+  tok[i++]=p;\par
+  p=strtok(NULL," ");\par
+ \}\par
+\par
+ tok[i]=NULL;\par
+\}\par
+\par
+void search(char *fn, char op, char *pattern)\par
+\{\par
+ int fh,count=0,i=0,j=0;\par
+ char buff[255],c,*p;\par
+\par
+ fh = open(fn,O_RDONLY);\par
+ if(fh==-1)\par
+ \{\par
+  printf("File %s Not Found\\n",fn);\par
+  return;\par
+ \}\par
+\par
+ switch(op)\par
+ \{\par
+ case 'f':\par
+  while(read(fh,&c,1))\par
+  \{\par
+   buff[j++]=c;\par
+   if(c=='\\n')\par
+   \{\par
+    buff[j]='\\0';\par
+    j=0;\par
+    i++;\par
+    if(strstr(buff,pattern))\par
+    \{\par
+     printf("%d: %s",i,buff);\par
+     break;\par
+    \}\par
+   \}\par
+  \}\par
+  break;\par
+ case 'c':\par
+  while(read(fh,&c,1))\par
+  \{\par
+   buff[j++]=c;\par
+   if(c=='\\n')\par
+   \{\par
+    buff[j]='\\0';\par
+    j=0;\par
+    p = buff;\par
+    while(p=strstr(p,pattern))\par
+    \{\par
+     count++;\par
+     p++;\par
+    \}\par
+   \}\par
+  \}\par
+  printf("Total No.of Occurrences = %d\\n",count);\par
+  break;\par
+ case 'a':\par
+  while(read(fh,&c,1))\par
+  \{\par
+   buff[j++]=c;\par
+   if(c=='\\n')\par
+   \{\par
+    buff[j]='\\0';\par
+    j = 0;\par
+    i++;\par
+    if(strstr(buff,pattern))\par
+     printf("%d: %s",i,buff);\par
+   \}\par
+  \}\par
+ \}//switch\par
+ close(fh);\par
+\}//search\par
+\par
+int main()\par
+\{\par
+ char buff[80],*args[10];\par
+ int pid;\par
+\par
+ while(1)\par
+ \{\par
+  printf("myshell$");\par
+  fflush(stdin);\par
+  fgets(buff,80,stdin);\par
+  buff[strlen(buff)-1]='\\0';\par
+  make_toks(buff,args);\par
+  if(strcmp(args[0],"search")==0)\par
+   search(args[3],args[1][0],args[2]);\par
+  else\par
+  \{\par
+   pid = fork();\par
+   if(pid>0)\par
+    wait();\par
+   else\par
+   \{\par
+    if(execvp(args[0],args)==-1)\par
+     printf("Bad command.\\n");\par
+   \}\par
+  \}\par
+ \}\par
+\par
+ return 0;\par
+\}\par
+\par
+\b\fs32 Slip No 5\par
+\fs24 Q.1)Write the simulation program for demand paging and show the page\par
+ scheduling and total number of page faults according the optimal page\par
+ replacement algorithm. Assume the memory of n frames.\par
+Reference String : 8, 5, 7, 8, 5, 7, 2, 3, 7, 3, 5, 9, 4, 6, 2 \par
+\ul\b0\fs22 Answer:\par
+\ulnone #include<stdio.h>\par
+#define MAX 20\par
+\par
+int frames[MAX],ref[MAX],mem[MAX][MAX],faults,\par
+ sp,m,n,count[MAX];\par
+\par
+void accept()\par
+\{\par
+ int i;\par
+\par
+ printf("Enter no.of frames:");\par
+ scanf("%d", &n);\par
+\par
+ printf("Enter no.of references:");\par
+ scanf("%d", &m);\par
+\par
+ printf("Enter reference string:\\n");\par
+ for(i=0;i<m;i++)\par
+ \{\par
+  printf("[%d]=",i);\par
+  scanf("%d",&ref[i]);\par
+ \}\par
+\}\par
+\par
+void disp()\par
+\{\par
+ int i,j;\par
+\par
+ for(i=0;i<m;i++)\par
+  printf("%3d",ref[i]);\par
+\par
+ printf("\\n\\n");\par
+\par
+ for(i=0;i<n;i++)\par
+ \{\par
+  for(j=0;j<m;j++)\par
+  \{\par
+   if(mem[i][j])\par
+    printf("%3d",mem[i][j]);\par
+   else\par
+    printf("   ");\par
+  \}\par
+  printf("\\n");\par
+ \}\par
+\par
+ printf("Total Page Faults: %d\\n",faults);\par
+\}\par
+\par
+int search(int pno)\par
+\{\par
+ int i;\par
+\par
+ for(i=0;i<n;i++)\par
+ \{\par
+  if(frames[i]==pno)\par
+   return i;\par
+ \}\par
+\par
+ return -1;\par
+\}\par
+\par
+int get_mfu(int sp)\par
+\{\par
+ int i,max_i,max=-9999;\par
+\par
+ i=sp;\par
+ do\par
+ \{\par
+  if(count[i]>max)\par
+  \{\par
+   max = count[i];\par
+   max_i = i;\par
+  \}\par
+  i=(i+1)%n;\par
+ \}while(i!=sp);\par
+\par
+ return max_i;\par
+\}\par
+\par
+void mfu()\par
+\{\par
+ int i,j,k;\par
+\par
+ for(i=0;i<m && sp<n;i++)\par
+ \{\par
+  k=search(ref[i]);\par
+  if(k==-1)\par
+  \{\par
+   frames[sp]=ref[i];\par
+   count[sp]++;\par
+   faults++;\par
+   sp++;\par
+\par
+   for(j=0;j<n;j++)\par
+    mem[j][i]=frames[j];\par
+  \}\par
+  else\par
+   count[k]++;\par
+  \par
+ \}\par
+\par
+ sp=0;\par
+ for(;i<m;i++)\par
+ \{\par
+  k = search(ref[i]);\par
+  if(k==-1)\par
+  \{\par
+   sp = get_mfu(sp);\par
+   frames[sp] = ref[i];\par
+   count[sp]=1;\par
+   faults++;\par
+   sp = (sp+1)%n;\par
+\par
+   for(j=0;j<n;j++)\par
+    mem[j][i] = frames[j];\par
+  \}\par
+  else\par
+   count[k]++;\par
+ \}\par
+\}\par
+      \par
+\par
+int main()\par
+\{\par
+ accept();\par
+ mfu();\par
+ disp();\par
+\par
+ return 0;\par
+\}\par
+\b\fs24 Q.2)Write a program to implement the shell. It should display the command\par
+ prompt \ldblquote myshell$\rdblquote . Tokenize the command line and execute the given\par
+ command by creating the child process. Additionally it should interpret the\par
+ following commands.\par
+ myshell$ search f filename pattern :- To display first occurrence of\par
+ pattern in the file.\par
+ myshell$ search c filename pattern :- To count the number of occurrence\par
+ of pattern in the file. \par
+\ul\b0\fs22 Answer:\par
+\ulnone #include <sys/types.h>\par
+#include <sys/stat.h>\par
+#include <fcntl.h>\par
+#include <stdio.h>\par
+#include <stdlib.h>\par
+#include <string.h>\par
+\par
+void make_toks(char *s, char *tok[])\par
+\{\par
+ int i=0;\par
+ char *p;\par
+\par
+ p = strtok(s," ");\par
+ while(p!=NULL)\par
+ \{\par
+  tok[i++]=p;\par
+  p=strtok(NULL," ");\par
+ \}\par
+\par
+ tok[i]=NULL;\par
+\}\par
+\par
+void search(char *fn, char op, char *pattern)\par
+\{\par
+ int fh,count=0,i=0,j=0;\par
+ char buff[255],c,*p;\par
+\par
+ fh = open(fn,O_RDONLY);\par
+ if(fh==-1)\par
+ \{\par
+  printf("File %s Not Found\\n",fn);\par
+  return;\par
+ \}\par
+\par
+ switch(op)\par
+ \{\par
+ case 'f':\par
+  while(read(fh,&c,1))\par
+  \{\par
+   buff[j++]=c;\par
+   if(c=='\\n')\par
+   \{\par
+    buff[j]='\\0';\par
+    j=0;\par
+    i++;\par
+    if(strstr(buff,pattern))\par
+    \{\par
+     printf("%d: %s",i,buff);\par
+     break;\par
+    \}\par
+   \}\par
+  \}\par
+  break;\par
+ case 'c':\par
+  while(read(fh,&c,1))\par
+  \{\par
+   buff[j++]=c;\par
+   if(c=='\\n')\par
+   \{\par
+    buff[j]='\\0';\par
+    j=0;\par
+    p = buff;\par
+    while(p=strstr(p,pattern))\par
+    \{\par
+     count++;\par
+     p++;\par
+    \}\par
+   \}\par
+  \}\par
+  printf("Total No.of Occurrences = %d\\n",count);\par
+  break;\par
+ case 'a':\par
+  while(read(fh,&c,1))\par
+  \{\par
+   buff[j++]=c;\par
+   if(c=='\\n')\par
+   \{\par
+    buff[j]='\\0';\par
+    j = 0;\par
+    i++;\par
+    if(strstr(buff,pattern))\par
+     printf("%d: %s",i,buff);\par
+   \}\par
+  \}\par
+ \}//switch\par
+ close(fh);\par
+\}//search\par
+\par
+int main()\par
+\{\par
+ char buff[80],*args[10];\par
+ int pid;\par
+\par
+ while(1)\par
+ \{\par
+  printf("myshell$");\par
+  fflush(stdin);\par
+  fgets(buff,80,stdin);\par
+  buff[strlen(buff)-1]='\\0';\par
+  make_toks(buff,args);\par
+  if(strcmp(args[0],"search")==0)\par
+   search(args[3],args[1][0],args[2]);\par
+  else\par
+  \{\par
+   pid = fork();\par
+   if(pid>0)\par
+    wait();\par
+   else\par
+   \{\par
+    if(execvp(args[0],args)==-1)\par
+     printf("Bad command.\\n");\par
+   \}\par
+  \}\par
+ \}\par
+\par
+ return 0;\par
+\}\par
+\par
+\b\fs32 Slip No 7\par
+\fs24 Q.1)Write the simulation program for demand paging and show the page\par
+ scheduling and total number of page faults according the Optimal page\par
+ replacement algorithm. Assume the memory of n frames.\par
+Reference String : 7, 5, 4, 8, 5, 7, 2, 3, 1, 3, 5, 9, 4, 6, 2 \par
+\ul\b0\fs22 Answer:\par
+\ulnone\b\fs24 Q.2) Write a program to implement shell. It should display the command prompt \par
+ \ldblquote myshell$\rdblquote . Tokenize the command line and execute the given command by \par
+ creating the child process. Additionally it should interpret the following \par
+ commands. \par
+ myshell$ search a filename pattern :- To search all the occurrence of \par
+ pattern in the file. \par
+ myshell$ search c filename pattern :- To count the number of occurrence \par
+ of pattern in the file.\par
+\ul\b0\fs22 Answer:\par
+\ulnone #include <sys/types.h>\par
+#include <sys/stat.h>\par
+#include <fcntl.h>\par
+#include <stdio.h>\par
+#include <stdlib.h>\par
+#include <string.h>\par
+\par
+void make_toks(char *s, char *tok[])\par
+\{\par
+ int i=0;\par
+ char *p;\par
+\par
+ p = strtok(s," ");\par
+ while(p!=NULL)\par
+ \{\par
+  tok[i++]=p;\par
+  p=strtok(NULL," ");\par
+ \}\par
+\par
+ tok[i]=NULL;\par
+\}\par
+\par
+void search(char *fn, char op, char *pattern)\par
+\{\par
+ int fh,count=0,i=0,j=0;\par
+ char buff[255],c,*p;\par
+\par
+ fh = open(fn,O_RDONLY);\par
+ if(fh==-1)\par
+ \{\par
+  printf("File %s Not Found\\n",fn);\par
+  return;\par
+ \}\par
+\par
+ switch(op)\par
+ \{\par
+ case 'f':\par
+  while(read(fh,&c,1))\par
+  \{\par
+   buff[j++]=c;\par
+   if(c=='\\n')\par
+   \{\par
+    buff[j]='\\0';\par
+    j=0;\par
+    i++;\par
+    if(strstr(buff,pattern))\par
+    \{\par
+     printf("%d: %s",i,buff);\par
+     break;\par
+    \}\par
+   \}\par
+  \}\par
+  break;\par
+ case 'c':\par
+  while(read(fh,&c,1))\par
+  \{\par
+   buff[j++]=c;\par
+   if(c=='\\n')\par
+   \{\par
+    buff[j]='\\0';\par
+    j=0;\par
+    p = buff;\par
+    while(p=strstr(p,pattern))\par
+    \{\par
+     count++;\par
+     p++;\par
+    \}\par
+   \}\par
+  \}\par
+  printf("Total No.of Occurrences = %d\\n",count);\par
+  break;\par
+ case 'a':\par
+  while(read(fh,&c,1))\par
+  \{\par
+   buff[j++]=c;\par
+   if(c=='\\n')\par
+   \{\par
+    buff[j]='\\0';\par
+    j = 0;\par
+    i++;\par
+    if(strstr(buff,pattern))\par
+     printf("%d: %s",i,buff);\par
+   \}\par
+  \}\par
+ \}//switch\par
+ close(fh);\par
+\}//search\par
+\par
+int main()\par
+\{\par
+ char buff[80],*args[10];\par
+ int pid;\par
+\par
+ while(1)\par
+ \{\par
+  printf("myshell$");\par
+  fflush(stdin);\par
+  fgets(buff,80,stdin);\par
+  buff[strlen(buff)-1]='\\0';\par
+  make_toks(buff,args);\par
+  if(strcmp(args[0],"search")==0)\par
+   search(args[3],args[1][0],args[2]);\par
+  else\par
+  \{\par
+   pid = fork();\par
+   if(pid>0)\par
+    wait();\par
+   else\par
+   \{\par
+    if(execvp(args[0],args)==-1)\par
+     printf("Bad command.\\n");\par
+   \}\par
+  \}\par
+ \}\par
+\par
+ return 0;\par
+\}\par
+\par
+\b\fs32 Slip No 8\par
+\fs24 Q.1)Write the simulation program for demand paging and show the page \par
+ scheduling and total number of page faults according the LRU page \par
+ replacement algorithm. Assume the memory of n frames.\par
+Reference String : 8, 5, 7, 8, 5, 7, 2, 3, 7, 3, 5, 9, 4, 6, 2\par
+\ul\b0\fs22 Answer:\par
+\ulnone #include<stdio.h>\par
+#define MAX 20\par
+\par
+int frames[MAX],ref[MAX],mem[MAX][MAX],faults,sp,m,n,time[MAX];\par
+\par
+void accept()\par
+\{\par
+\tab int i;\par
+\par
+\tab printf("Enter no.of frames:");\par
+\tab scanf("%d", &n);\par
+\par
+\tab printf("Enter no.of references:");\par
+\tab scanf("%d", &m);\par
+\par
+\tab printf("Enter reference string:\\n");\par
+\tab for(i=0;i<m;i++)\par
+\tab\{\par
+\tab\tab printf("[%d]=",i);\par
+\tab\tab scanf("%d",&ref[i]);\par
+\tab\}\par
+\}\par
+\par
+void disp()\par
+\{\par
+\tab int i,j;\par
+\par
+\tab for(i=0;i<m;i++)\par
+\tab\tab printf("%3d",ref[i]);\par
+\par
+\tab printf("\\n\\n");\par
+\par
+\tab for(i=0;i<n;i++)\par
+\tab\{\par
+\tab\tab for(j=0;j<m;j++)\par
+\tab\tab\{\par
+\tab\tab\tab if(mem[i][j])\par
+\tab\tab\tab\tab printf("%3d",mem[i][j]);\par
+\tab\tab\tab else\par
+\tab\tab\tab\tab printf("   ");\par
+\tab\tab\}\par
+\tab\tab printf("\\n");\par
+\tab\}\par
+\par
+\tab printf("Total Page Faults: %d\\n",faults);\par
+\}\par
+\par
+int search(int pno)\par
+\{\par
+\tab int i;\par
+\par
+\tab for(i=0;i<n;i++)\par
+\tab\{\par
+\tab\tab if(frames[i]==pno)\par
+\tab\tab\tab return i;\par
+\tab\}\par
+\par
+\tab return -1;\par
+\}\par
+\par
+int get_lru()\par
+\{\par
+\tab int i,min_i,min=9999;\par
+\par
+\tab for(i=0;i<n;i++)\par
+\tab\{\par
+\tab\tab if(time[i]<min)\par
+\tab\tab\{\par
+\tab\tab\tab min = time[i];\par
+\tab\tab\tab min_i = i;\par
+\tab\tab\}\par
+\tab\}\par
+\par
+\tab return min_i;\par
+\}\par
+\par
+\par
+void lru()\par
+\{\par
+\tab int i,j,k;\par
+\par
+\tab for(i=0;i<m && sp<n;i++)\par
+\tab\{\par
+\tab\tab k=search(ref[i]);\par
+\tab\tab if(k==-1)\par
+\tab\tab\{\par
+\tab\tab\tab frames[sp]=ref[i];\par
+\tab\tab\tab time[sp]=i;\par
+\tab\tab\tab faults++;\par
+\tab\tab\tab sp++;\par
+\par
+\tab\tab\tab for(j=0;j<n;j++)\par
+\tab\tab\tab\tab mem[j][i]=frames[j];\par
+\tab\tab\}\par
+\tab\tab else\par
+\tab\tab\tab time[k]=i;\par
+\tab\tab\par
+\tab\}\par
+\par
+\tab for(i=0;i<m;i++)\par
+\tab\{\par
+\tab\tab k = search(ref[i]);\par
+\tab\tab if(k==-1)\par
+\tab\tab\{\par
+\tab\tab\tab sp = get_lru();\par
+\tab\tab\tab frames[sp] = ref[i];\par
+\tab\tab\tab time[sp] = i;\par
+\tab\tab\tab faults++;\par
+\par
+\tab\tab\tab for(j=0;j<n;j++)\par
+\tab\tab\tab\tab mem[j][i] = frames[j];\par
+\tab\tab\}\par
+\tab\tab else\par
+\tab\tab\tab time[k]=i;\par
+\tab\}\par
+\}\par
+\tab\tab\tab\tab\tab\tab\par
+\par
+int main()\par
+\{\par
+\tab accept();\par
+\tab lru();\par
+\tab disp();\par
+\par
+\tab return 0;\par
+\}\par
+\b\fs24 Q.2)Write a programto implement the shell. It should display the command prompt \par
+ \ldblquote myshell$\rdblquote . Tokenize the command line and execute the given command by \par
+ creating the child process. Additionally it should interpret the following \par
+ commands. \par
+ myshell$ search f filename pattern :- To display first occurrence of \par
+ pattern in the file.\par
+ myshell$ search c filename pattern :- To count the number of occurrence \par
+ of pattern in the file.\par
+\ul\b0\fs22 Answer:\par
+\ulnone #include <sys/types.h>\par
+#include <sys/stat.h>\par
+#include <fcntl.h>\par
+#include <stdio.h>\par
+#include <stdlib.h>\par
+#include <string.h>\par
+\par
+void make_toks(char *s, char *tok[])\par
+\{\par
+ int i=0;\par
+ char *p;\par
+\par
+ p = strtok(s," ");\par
+ while(p!=NULL)\par
+ \{\par
+  tok[i++]=p;\par
+  p=strtok(NULL," ");\par
+ \}\par
+\par
+ tok[i]=NULL;\par
+\}\par
+\par
+void search(char *fn, char op, char *pattern)\par
+\{\par
+ int fh,count=0,i=0,j=0;\par
+ char buff[255],c,*p;\par
+\par
+ fh = open(fn,O_RDONLY);\par
+ if(fh==-1)\par
+ \{\par
+  printf("File %s Not Found\\n",fn);\par
+  return;\par
+ \}\par
+\par
+ switch(op)\par
+ \{\par
+ case 'f':\par
+  while(read(fh,&c,1))\par
+  \{\par
+   buff[j++]=c;\par
+   if(c=='\\n')\par
+   \{\par
+    buff[j]='\\0';\par
+    j=0;\par
+    i++;\par
+    if(strstr(buff,pattern))\par
+    \{\par
+     printf("%d: %s",i,buff);\par
+     break;\par
+    \}\par
+   \}\par
+  \}\par
+  break;\par
+ case 'c':\par
+  while(read(fh,&c,1))\par
+  \{\par
+   buff[j++]=c;\par
+   if(c=='\\n')\par
+   \{\par
+    buff[j]='\\0';\par
+    j=0;\par
+    p = buff;\par
+    while(p=strstr(p,pattern))\par
+    \{\par
+     count++;\par
+     p++;\par
+    \}\par
+   \}\par
+  \}\par
+  printf("Total No.of Occurrences = %d\\n",count);\par
+  break;\par
+ case 'a':\par
+  while(read(fh,&c,1))\par
+  \{\par
+   buff[j++]=c;\par
+   if(c=='\\n')\par
+   \{\par
+    buff[j]='\\0';\par
+    j = 0;\par
+    i++;\par
+    if(strstr(buff,pattern))\par
+     printf("%d: %s",i,buff);\par
+   \}\par
+  \}\par
+ \}//switch\par
+ close(fh);\par
+\}//search\par
+\par
+int main()\par
+\{\par
+ char buff[80],*args[10];\par
+ int pid;\par
+\par
+ while(1)\par
+ \{\par
+  printf("myshell$");\par
+  fflush(stdin);\par
+  fgets(buff,80,stdin);\par
+  buff[strlen(buff)-1]='\\0';\par
+  make_toks(buff,args);\par
+  if(strcmp(args[0],"search")==0)\par
+   search(args[3],args[1][0],args[2]);\par
+  else\par
+  \{\par
+   pid = fork();\par
+   if(pid>0)\par
+    wait();\par
+   else\par
+   \{\par
+    if(execvp(args[0],args)==-1)\par
+     printf("Bad command.\\n");\par
+   \}\par
+  \}\par
+ \}\par
+\par
+ return 0;\par
+\}\par
+\par
+\b\fs32 Slip No 9\par
+\fs24 Q.1)Write the simulation program for demand paging and show the page \par
+ scheduling and total number of page faults according the FIFO page \par
+ replacement algorithm. Assume the memory of n frames.\par
+Reference String : 8, 5, 7, 8, 5, 7, 2, 3, 7, 3, 5, 9, 4, 6, 2 \par
+\ul\b0\fs22 Answer:\par
+\ulnone #include<stdio.h>\par
+#define MAX 20\par
+\par
+int frames[MAX],ref[MAX],mem[MAX][MAX],faults,sp,m,n;\par
+\par
+void accept()\par
+\{\par
+\tab int i;\par
+\par
+\tab printf("Enter no.of frames:");\par
+\tab scanf("%d", &n);\par
+\par
+\tab printf("Enter no.of references:");\par
+\tab scanf("%d", &m);\par
+\par
+\tab printf("Enter reference string:\\n");\par
+\tab for(i=0;i<m;i++)\par
+\tab\{\par
+\tab\tab printf("[%d]=",i);\par
+\tab\tab scanf("%d",&ref[i]);\par
+\tab\}\par
+\}\par
+\par
+void disp()\par
+\{\par
+\tab int i,j;\par
+\par
+\tab for(i=0;i<m;i++)\par
+\tab\tab printf("%3d",ref[i]);\par
+\par
+\tab printf("\\n\\n");\par
+\par
+\tab for(i=0;i<n;i++)\par
+\tab\{\par
+\tab\tab for(j=0;j<m;j++)\par
+\tab\tab\{\par
+\tab\tab\tab if(mem[i][j])\par
+\tab\tab\tab\tab printf("%3d",mem[i][j]);\par
+\tab\tab\tab else\par
+\tab\tab\tab\tab printf("   ");\par
+\tab\tab\}\par
+\tab\tab printf("\\n");\par
+\tab\}\par
+\par
+\tab printf("Total Page Faults: %d\\n",faults);\par
+\}\par
+\par
+int search(int pno)\par
+\{\par
+\tab int i;\par
+\par
+\tab for(i=0;i<n;i++)\par
+\tab\{\par
+\tab\tab if(frames[i]==pno)\par
+\tab\tab\tab return i;\par
+\tab\}\par
+\par
+\tab return -1;\par
+\}\par
+\par
+void fifo()\par
+\{\par
+\tab int i,j;\par
+\par
+\tab for(i=0;i<m;i++)\par
+\tab\{\par
+\tab\tab if(search(ref[i])==-1)\par
+\tab\tab\{\par
+\tab\tab\tab frames[sp] = ref[i];\par
+\tab\tab\tab sp = (sp+1)%n;\par
+\tab\tab\tab faults++;\par
+\tab\tab\tab for(j=0;j<n;j++)\par
+\tab\tab\tab\tab mem[j][i] = frames[j];\par
+\par
+\tab\tab\}\par
+\tab\}\par
+\}\par
+\par
+int main()\par
+\{\par
+\tab accept();\par
+\tab fifo();\par
+\tab disp();\par
+\par
+\tab return 0;\par
+\}\par
+\b\fs24 Q.2)Write a program to implement the shell. It should display the command \par
+ prompt \ldblquote myshell$\rdblquote . Tokenize the command line and execute the given \par
+ command by creating the child process. Additionally it should\par
+ interpret the following commands. \par
+ myshell$ search f filename pattern :- To display first occurrence of \par
+ pattern in the file.\par
+ myshell$ search a filename pattern :- To search all the occurrence of \par
+ pattern in the file. \par
+\ul\b0\fs22 Answer:\par
+\ulnone #include <sys/types.h>\par
+#include <sys/stat.h>\par
+#include <fcntl.h>\par
+#include <stdio.h>\par
+#include <stdlib.h>\par
+#include <string.h>\par
+\par
+void make_toks(char *s, char *tok[])\par
+\{\par
+ int i=0;\par
+ char *p;\par
+\par
+ p = strtok(s," ");\par
+ while(p!=NULL)\par
+ \{\par
+  tok[i++]=p;\par
+  p=strtok(NULL," ");\par
+ \}\par
+\par
+ tok[i]=NULL;\par
+\}\par
+\par
+void search(char *fn, char op, char *pattern)\par
+\{\par
+ int fh,count=0,i=0,j=0;\par
+ char buff[255],c,*p;\par
+\par
+ fh = open(fn,O_RDONLY);\par
+ if(fh==-1)\par
+ \{\par
+  printf("File %s Not Found\\n",fn);\par
+  return;\par
+ \}\par
+\par
+ switch(op)\par
+ \{\par
+ case 'f':\par
+  while(read(fh,&c,1))\par
+  \{\par
+   buff[j++]=c;\par
+   if(c=='\\n')\par
+   \{\par
+    buff[j]='\\0';\par
+    j=0;\par
+    i++;\par
+    if(strstr(buff,pattern))\par
+    \{\par
+     printf("%d: %s",i,buff);\par
+     break;\par
+    \}\par
+   \}\par
+  \}\par
+  break;\par
+ case 'c':\par
+  while(read(fh,&c,1))\par
+  \{\par
+   buff[j++]=c;\par
+   if(c=='\\n')\par
+   \{\par
+    buff[j]='\\0';\par
+    j=0;\par
+    p = buff;\par
+    while(p=strstr(p,pattern))\par
+    \{\par
+     count++;\par
+     p++;\par
+    \}\par
+   \}\par
+  \}\par
+  printf("Total No.of Occurrences = %d\\n",count);\par
+  break;\par
+ case 'a':\par
+  while(read(fh,&c,1))\par
+  \{\par
+   buff[j++]=c;\par
+   if(c=='\\n')\par
+   \{\par
+    buff[j]='\\0';\par
+    j = 0;\par
+    i++;\par
+    if(strstr(buff,pattern))\par
+     printf("%d: %s",i,buff);\par
+   \}\par
+  \}\par
+ \}//switch\par
+ close(fh);\par
+\}//search\par
+\par
+int main()\par
+\{\par
+ char buff[80],*args[10];\par
+ int pid;\par
+\par
+ while(1)\par
+ \{\par
+  printf("myshell$");\par
+  fflush(stdin);\par
+  fgets(buff,80,stdin);\par
+  buff[strlen(buff)-1]='\\0';\par
+  make_toks(buff,args);\par
+  if(strcmp(args[0],"search")==0)\par
+   search(args[3],args[1][0],args[2]);\par
+  else\par
+  \{\par
+   pid = fork();\par
+   if(pid>0)\par
+    wait();\par
+   else\par
+   \{\par
+    if(execvp(args[0],args)==-1)\par
+     printf("Bad command.\\n");\par
+   \}\par
+  \}\par
+ \}\par
+\par
+ return 0;\par
+\}\par
+\par
+\b\fs32 Slip No 10\par
+\fs24 Q.1)Write the simulation program for demand paging and show the page \par
+ scheduling and total number of page faults according the FIFO page \par
+ replacement algorithm. Assume the memory of n frames.\par
+ Reference String : 2, 4, 5, 6, 9, 4, 7, 3, 4, 5, 6, 7, 2, 4, 7, 1\par
+\ul\b0\fs22 Answer:\par
+\ulnone #include<stdio.h>\par
+#define MAX 20\par
+\par
+int frames[MAX],ref[MAX],mem[MAX][MAX],faults,sp,m,n;\par
+\par
+void accept()\par
+\{\par
+\tab int i;\par
+\par
+\tab printf("Enter no.of frames:");\par
+\tab scanf("%d", &n);\par
+\par
+\tab printf("Enter no.of references:");\par
+\tab scanf("%d", &m);\par
+\par
+\tab printf("Enter reference string:\\n");\par
+\tab for(i=0;i<m;i++)\par
+\tab\{\par
+\tab\tab printf("[%d]=",i);\par
+\tab\tab scanf("%d",&ref[i]);\par
+\tab\}\par
+\}\par
+\par
+void disp()\par
+\{\par
+\tab int i,j;\par
+\par
+\tab for(i=0;i<m;i++)\par
+\tab\tab printf("%3d",ref[i]);\par
+\par
+\tab printf("\\n\\n");\par
+\par
+\tab for(i=0;i<n;i++)\par
+\tab\{\par
+\tab\tab for(j=0;j<m;j++)\par
+\tab\tab\{\par
+\tab\tab\tab if(mem[i][j])\par
+\tab\tab\tab\tab printf("%3d",mem[i][j]);\par
+\tab\tab\tab else\par
+\tab\tab\tab\tab printf("   ");\par
+\tab\tab\}\par
+\tab\tab printf("\\n");\par
+\tab\}\par
+\par
+\tab printf("Total Page Faults: %d\\n",faults);\par
+\}\par
+\par
+int search(int pno)\par
+\{\par
+\tab int i;\par
+\par
+\tab for(i=0;i<n;i++)\par
+\tab\{\par
+\tab\tab if(frames[i]==pno)\par
+\tab\tab\tab return i;\par
+\tab\}\par
+\par
+\tab return -1;\par
+\}\par
+\par
+void fifo()\par
+\{\par
+\tab int i,j;\par
+\par
+\tab for(i=0;i<m;i++)\par
+\tab\{\par
+\tab\tab if(search(ref[i])==-1)\par
+\tab\tab\{\par
+\tab\tab\tab frames[sp] = ref[i];\par
+\tab\tab\tab sp = (sp+1)%n;\par
+\tab\tab\tab faults++;\par
+\tab\tab\tab for(j=0;j<n;j++)\par
+\tab\tab\tab\tab mem[j][i] = frames[j];\par
+\par
+\tab\tab\}\par
+\tab\}\par
+\}\par
+\par
+int main()\par
+\{\par
+\tab accept();\par
+\tab fifo();\par
+\tab disp();\par
+\par
+\tab return 0;\par
+\}\par
+\b\fs24 Q.2)Write a program to implement the shell. It should display the command \par
+ prompt \ldblquote myshell$\rdblquote . Tokenize the command line and execute the given \par
+ command by creating the child process. Additionally it should interpret the \par
+ following \lquote list\rquote  commands as \par
+ myshell$ list f dirname :- To print names of all the files in current \par
+ directory.\par
+ myshell$ list i dirname :- To print names and inodes of the files in the \par
+ current directory.\par
+\ul\b0\fs22 Answer:\par
+\ulnone #include <sys/types.h>\par
+#include <sys/stat.h>\par
+#include <fcntl.h>\par
+#include <stdio.h>\par
+#include <stdlib.h>\par
+#include <string.h>\par
+#include <dirent.h>\par
+\par
+void make_toks(char *s, char *tok[])\par
+\{\par
+ int i=0;\par
+ char *p;\par
+\par
+ p = strtok(s," ");\par
+ while(p!=NULL)\par
+ \{\par
+  tok[i++]=p;\par
+  p=strtok(NULL," ");\par
+ \}\par
+\par
+ tok[i]=NULL;\par
+\}\par
+\par
+void list(char *dn, char op)\par
+\{\par
+ DIR *dp;\par
+ struct dirent *entry;\par
+ int dc=0,fc=0;\par
+\par
+ dp = opendir(dn);\par
+ if(dp==NULL)\par
+ \{\par
+  printf("Dir %s not found.\\n",dn);\par
+  return;\par
+ \}\par
+\par
+ switch(op)\par
+ \{\par
+ case 'f':\par
+  while(entry=readdir(dp))\par
+  \{\par
+   if(entry->d_type==DT_REG)\par
+    printf("%s\\n",entry->d_name);\par
+  \}\par
+  break;\par
+ case 'n':\par
+  while(entry=readdir(dp))\par
+  \{\par
+   if(entry->d_type==DT_DIR) dc++;\par
+   if(entry->d_type==DT_REG) fc++;\par
+  \}\par
+ \par
+  printf("%d Dir(s)\\t%d File(s)\\n",dc,fc);\par
+  break;\par
+ case 'i':\par
+  while(entry=readdir(dp))\par
+  \{\par
+   if(entry->d_type==DT_REG)\par
+    printf("%s\\t%d\\n",entry->d_name,entry->d_fileno);\par
+  \}\par
+ \}\par
+\par
+ closedir(dp);\par
+\}\par
+\par
+int main()\par
+\{\par
+ char buff[80],*args[10];\par
+ int pid;\par
+\par
+ while(1)\par
+ \{\par
+  printf("myshell$");\par
+  fflush(stdin);\par
+  fgets(buff,80,stdin);\par
+  buff[strlen(buff)-1]='\\0';\par
+  make_toks(buff,args);\par
+  if(strcmp(args[0],"list")==0)\par
+   list(args[2],args[1][0]);\par
+  else\par
+  \{\par
+   pid = fork();\par
+   if(pid>0)\par
+    wait();\par
+   else\par
+   \{\par
+    if(execvp(args[0],args)==-1)\par
+     printf("Bad command.\\n");\par
+   \}\par
+  \}\par
+ \}\par
+\par
+ return 0;\par
+\}\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+ \par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+ \par
+\par
+\par
+\par
+\par
+\par
+ \par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\tab\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+ \par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+}
+ 
